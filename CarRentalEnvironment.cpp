@@ -60,6 +60,7 @@ void CarRentalEnvironment::generate_dynamics_p()
                 s_prime[1] += a;
 
                 double probability = 1;
+                bool invalid_state = false;
                 for (int loc = 0; loc < s.size(); loc++)
                 {
                     auto [requested, returned] = state_rr[loc];
@@ -73,9 +74,16 @@ void CarRentalEnvironment::generate_dynamics_p()
 
                     // return the cars
                     s_prime[loc] += returned;
+
+                    if (s_prime[loc] > MAX_CARS_COUNT_PER_LOCATION) {
+                        invalid_state = true;
+                        break;
+                    }
                 }
 
-                m_dynamics[{s, a}].emplace_back(s_prime, reward, probability);
+                if (!invalid_state) {
+                    m_dynamics[{s, a}].emplace_back(s_prime, reward, probability);
+                }
             }
         }
     }

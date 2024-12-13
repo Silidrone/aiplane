@@ -36,8 +36,9 @@ public:
     Return v(State s)
     {
         auto it = m_v.find(s);
-        if (it == m_v.end()) throw std::runtime_error("Error: Invalid state provided for the v-value function.");
-
+        if (it == m_v.end()) {
+            throw std::runtime_error("Error: Invalid state provided for the v-value function.");
+        }
         return it->second;
     }
 

@@ -1,15 +1,11 @@
-cmake_minimum_required(VERSION 3.10)  # Specify CMake version
+cmake_minimum_required(VERSION 3.10)
+project(AiPlane)
 
-# Set the project name
-project(MyProject)
-
-# Set the C++ standard
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0")
 add_subdirectory(matplotplusplus)
 
-# Include directories
 include_directories(
     ${CMAKE_SOURCE_DIR}  # This is equivalent to "${workspaceFolder}/"
     /usr/include/python3.10
