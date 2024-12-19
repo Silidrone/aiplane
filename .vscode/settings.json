@@ -2,8 +2,9 @@
     "terminal.integrated.env.linux": {
         "GTK_PATH": null,
     },
-    "C_Cpp.default.compileCommands": "${workspaceFolder}/build/compile_commands.json",
-    "C_Cpp.intelliSenseEngine": "default",
-    "C_Cpp.errorSquiggles": "enabled",
-    "C_Cpp.loggingLevel": "Debug"
+    "C_Cpp.intelliSenseEngine": "disabled",  // Disable Microsoft's IntelliSense engine
+    "clangd.arguments": [
+        "--compile-commands-dir=${workspaceFolder}/build"
+    ],
+    "clangd.path": "/usr/bin/clangd"
 }
