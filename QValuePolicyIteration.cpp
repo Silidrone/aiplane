@@ -55,3 +55,4 @@ bool QValuePolicyIteration<State, Action>::policy_improvement() {
 }
 
 template class QValuePolicyIteration<std::vector<int>, int>;
+template class QValuePolicyIteration<int, int>;

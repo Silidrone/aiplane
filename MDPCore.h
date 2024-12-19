@@ -1,5 +1,4 @@
-#ifndef MDPCORE_H
-#define MDPCORE_H
+#pragma once
 
 #include <m_utils.h>
 
@@ -53,5 +52,3 @@ class MDPCore {
 
     std::vector<Action> A(State s) { return m_A[s]; }
 };
-
-#endif  // MDPCORE_H

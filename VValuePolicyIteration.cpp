@@ -63,3 +63,4 @@ bool VValuePolicyIteration<State, Action>::policy_improvement() {
 }
 
 template class VValuePolicyIteration<std::vector<int>, int>;
+template class VValuePolicyIteration<int, int>;

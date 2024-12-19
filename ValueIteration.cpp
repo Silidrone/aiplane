@@ -62,3 +62,4 @@ void ValueIteration<State, Action>::update_final_policy() {
 }
 
 template class ValueIteration<std::vector<int>, int>;
+template class ValueIteration<int, int>;

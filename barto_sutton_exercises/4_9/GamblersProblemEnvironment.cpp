@@ -3,12 +3,13 @@
 #include "m_utils.h"
 
 void GamblersProblemEnvironment::initialize() {
+    m_S.emplace_back(MIN_STAKE);
     for (State s = MIN_STAKE + 1; s <= MAX_STAKE - 1; s++) {
         m_S.emplace_back(s);
 
-        for (auto& coin_flip : coin_flips) {
-            for (Action a = MIN_STAKE; a <= std::min(s, MAX_STAKE - s); a++) {
-                m_A[s].emplace_back(a);
+        for (Action a = MIN_STAKE; a <= std::min(s, MAX_STAKE - s); a++) {
+            m_A[s].emplace_back(a);
+            for (auto& coin_flip : coin_flips) {
                 if (coin_flip == HEADS) {
                     State state = s + a;
                     Reward reward = (state == MAX_STAKE) ? 1 : 0;
@@ -22,4 +23,5 @@ void GamblersProblemEnvironment::initialize() {
             }
         }
     }
+    m_S.emplace_back(MAX_STAKE);
 }

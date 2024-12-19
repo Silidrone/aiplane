@@ -1,5 +1,4 @@
-#ifndef CARRENTALENVIRONMENT_H
-#define CARRENTALENVIRONMENT_H
+#pragma once
 
 #include <unordered_map>
 #include <vector>
@@ -30,5 +29,3 @@ class CarRentalEnvironment : public MDPCore<State, Action> {
    public:
     void initialize() override;
 };
-
-#endif  // CARRENTALENVIRONMENT_H

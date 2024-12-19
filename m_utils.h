@@ -1,5 +1,4 @@
-#ifndef M_UTILS_H
-#define M_UTILS_H
+#pragma once
 
 #include <cmath>
 #include <vector>
@@ -72,4 +71,3 @@ struct StateActionPairHash {
     }
 };
 
-#endif // M_UTILS_H

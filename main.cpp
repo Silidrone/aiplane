@@ -6,10 +6,11 @@
 
 #include "VValuePolicyIteration.h"
 #include "ValueIteration.h"
-#include "barto_sutton_exercises/4_7/CarRentalEnvironment.h"
+// #include "barto_sutton_exercises/4_7/CarRentalEnvironment.h"
+#include "./barto_sutton_exercises/4_9/GamblersProblemEnvironment.h"
 
-template <typename State, typename Action>
-void plot_policy(Policy<State, Action> &pi) {
+// For Jack's Car Rental Problem
+void plot_policy(Policy<std::vector<int>, int> &pi) {
     int grid_size_x = 21;
     int grid_size_y = 21;
 
@@ -42,9 +43,32 @@ void plot_policy(Policy<State, Action> &pi) {
     matplot::show();
 }
 
+// For Gambler's Problem
+void plot_policy(Policy<int, int> &pi) {
+    int grid_size = 101;
+
+    matplot::vector_1d x, y;
+
+    for (int i = 0; i < grid_size; ++i) {
+        x.push_back(i);
+    }
+
+    for (int i = 0; i < grid_size; ++i) {
+        y.push_back(static_cast<double>(pi(i)));
+    }
+
+    matplot::plot(x, y);
+
+    matplot::xlabel("Amount of money (state)");
+    matplot::ylabel("Bet size (action)");
+    matplot::title("Policy Plot for Gambler's Problem");
+
+    matplot::show();
+}
+
 int main() {
-    CarRentalEnvironment car_rental_environment;
-    ValueIteration<std::vector<int>, int> value_iteration(&car_rental_environment);
+    GamblersProblemEnvironment car_rental_environment;
+    ValueIteration<int, int> value_iteration(&car_rental_environment);
 
     car_rental_environment.initialize();
     value_iteration.initialize();

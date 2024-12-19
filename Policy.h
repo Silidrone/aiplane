@@ -1,5 +1,4 @@
-#ifndef POLICY_H
-#define POLICY_H
+#pragma once
 
 #include <fstream>
 #include <nlohmann/json.hpp>  // Include JSON library
@@ -17,24 +16,18 @@ class Policy {
     Action operator()(const State& state) const {
         auto it = m_policy_map.find(state);
         if (it == m_policy_map.end()) {
-            throw std::runtime_error(
-                "Error: Invalid state provided for the pi policy function.");
+            throw std::runtime_error("Error: Invalid state provided for the pi policy function.");
         }
         return it->second;
     }
 
     Action& operator[](const State& state) { return m_policy_map[state]; }
 
-    void set(const State& state, const Action& action) {
-        m_policy_map[state] = action;
-    }
+    void set(const State& state, const Action& action) { m_policy_map[state] = action; }
 
     bool has(const State& state) const { return m_policy_map.contains(state); }
 
-    const std::unordered_map<State, Action, StateHash<State>>& map_container()
-        const {
-        return m_policy_map;
-    }
+    const std::unordered_map<State, Action, StateHash<State>>& map_container() const { return m_policy_map; }
 
     std::string to_json_string() const {
         nlohmann::json j;
@@ -54,5 +47,3 @@ class Policy {
         }
     }
 };
-
-#endif  // POLICY_H

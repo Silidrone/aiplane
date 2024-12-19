@@ -1,5 +1,4 @@
-#ifndef MDPSOLVER_H
-#define MDPSOLVER_H
+#pragma once
 
 #include <stdexcept>
 
@@ -64,4 +63,3 @@ class MDPSolver {
     Policy<State, Action> get_policy() { return m_pi; }
 };
 
-#endif  // MDPSOLVER_H
