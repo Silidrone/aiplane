@@ -1,7 +1,7 @@
 #include "VValuePolicyIteration.h"
 
 template <typename State, typename Action>
-VValuePolicyIteration<State, Action>::VValuePolicyIteration(MDPCore<State, Action>* mdp_core)
+VValuePolicyIteration<State, Action>::VValuePolicyIteration(MDPCore<State, Action> *mdp_core)
     : PolicyIteration<State, Action>(mdp_core, DISCOUNT_RATE, POLICY_THRESHOLD_EPSILON) {}
 
 template <typename State, typename Action>
@@ -34,11 +34,12 @@ bool VValuePolicyIteration<State, Action>::policy_improvement() {
     bool policy_stable = true;
     for (State &s : this->m_mdp->S()) {
         const Return old_value = this->v(s);
-        Return max_value = std::numeric_limits<Return>::lowest();  // in case we decide to use negative rewards
+        Return max_value = std::numeric_limits<Return>::lowest();  // in case we decide to use
+                                                                   // negative rewards
         Action maximizing_action;
-        for (Action &a : this->m_mdp->A()) {
+        for (Action &a : this->m_mdp->A(s)) {
             Return state_value = 0;
-            auto transitions =  this->m_mdp->p(s, a);
+            auto transitions = this->m_mdp->p(s, a);
             for (auto &transition : transitions) {
                 State s_prime = std::get<0>(transition);
                 Reward r = std::get<1>(transition);

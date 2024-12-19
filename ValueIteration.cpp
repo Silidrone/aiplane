@@ -1,8 +1,7 @@
 #include "ValueIteration.h"
 
 template <typename State, typename Action>
-ValueIteration<State, Action>::ValueIteration(MDPCore<State, Action>* mdp_core)
-    : MDPSolver<State, Action>(mdp_core) {}
+ValueIteration<State, Action>::ValueIteration(MDPCore<State, Action> *mdp_core) : MDPSolver<State, Action>(mdp_core) {}
 
 template <typename State, typename Action>
 void ValueIteration<State, Action>::policy_iteration() {
@@ -13,7 +12,7 @@ void ValueIteration<State, Action>::policy_iteration() {
         for (State &s : this->m_mdp->S()) {
             Return old_value = this->v(s);
             Return max_value = std::numeric_limits<Return>::lowest();
-            for (Action &a : this->m_mdp->A()) {
+            for (Action &a : this->m_mdp->A(s)) {
                 Return new_value = 0;
                 auto transitions = this->m_mdp->p(s, a);
 
@@ -42,7 +41,7 @@ void ValueIteration<State, Action>::update_final_policy() {
         Return old_value = this->v(s);
         Action max_action;
         Return max_value = std::numeric_limits<Return>::lowest();
-        for (Action &a : this->m_mdp->A()) {
+        for (Action &a : this->m_mdp->A(s)) {
             Return new_value = 0;
             auto transitions = this->m_mdp->p(s, a);
 

@@ -8,47 +8,42 @@
 
 template <typename State, typename Action>
 class MDPSolver {
-protected:
-
-    Policy<State, Action> m_pi; // Policy pi function
+   protected:
+    Policy<State, Action> m_pi;                                 // Policy pi function
     std::unordered_map<State, Return, StateHash<State>> m_v{};  // State-value v function
-    std::unordered_map<std::pair<State, Action>, Return, StateActionPairHash<State, Action>> m_Q; // Action-value Q function
+    std::unordered_map<std::pair<State, Action>, Return, StateActionPairHash<State, Action>>
+        m_Q;  // Action-value Q function
 
-    MDPCore<State, Action>* m_mdp;
+    MDPCore<State, Action> *m_mdp;
 
     virtual void initialize_policy() {
-        for (const State &s : this->m_mdp->S())
-        {
+        for (const State &s : this->m_mdp->S()) {
             this->m_pi.set(s, 0);
         }
     }
 
     virtual void initialize_value_functions() {
-        for (const State &s : this->m_mdp->S())
-        {
+        for (const State &s : this->m_mdp->S()) {
             this->m_v[s] = 0;
-            for (const Action &a : this->m_mdp->A()) {
+            for (const Action &a : this->m_mdp->A(s)) {
                 this->m_Q[{s, a}] = 0;
             }
         }
     }
-public:
+
+   public:
     virtual ~MDPSolver() = default;
 
-    explicit MDPSolver(MDPCore<State, Action>* mdp_core) : m_mdp(mdp_core) {}
+    explicit MDPSolver(MDPCore<State, Action> *mdp_core) : m_mdp(mdp_core) {}
 
     virtual void initialize() {
         initialize_policy();
         initialize_value_functions();
     }
 
-    Action pi(State s)
-    {
-        return m_pi(s);
-    }
+    Action pi(State s) { return m_pi(s); }
 
-    Return v(State s)
-    {
+    Return v(State s) {
         auto it = m_v.find(s);
         if (it == m_v.end()) {
             throw std::runtime_error("Error: Invalid state provided for the v-value function.");
@@ -56,17 +51,17 @@ public:
         return it->second;
     }
 
-    Return Q(State s, Action a)
-    {
+    Return Q(State s, Action a) {
         auto it = m_Q.find({s, a});
-        if (it == m_Q.end()) throw std::runtime_error("Error: Invalid state-action pair provided for the Q-value function.");
+        if (it == m_Q.end())
+            throw std::runtime_error(
+                "Error: Invalid state-action pair provided for the Q-value "
+                "function.");
 
         return it->second;
     }
 
-    Policy<State, Action> get_policy() {
-        return m_pi;
-    }
+    Policy<State, Action> get_policy() { return m_pi; }
 };
 
-#endif // MDPSOLVER_H
+#endif  // MDPSOLVER_H

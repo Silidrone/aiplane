@@ -1,7 +1,7 @@
 #include "QValuePolicyIteration.h"
 
 template <typename State, typename Action>
-QValuePolicyIteration<State, Action>::QValuePolicyIteration(MDPCore<State, Action>* mdp_core)
+QValuePolicyIteration<State, Action>::QValuePolicyIteration(MDPCore<State, Action> *mdp_core)
     : PolicyIteration<State, Action>(mdp_core, 0.9f, 0.01f) {}
 
 template <typename State, typename Action>
@@ -10,7 +10,7 @@ void QValuePolicyIteration<State, Action>::policy_evaluation() {
     do {
         delta = 0;
         for (State &s : this->m_mdp->S()) {
-            for (Action &a : this->m_mdp->A()) {
+            for (Action &a : this->m_mdp->A(s)) {
                 const Return old_value = this->Q(s, a);
                 Return new_value = 0;
                 auto transitions = this->m_mdp->p(s, a);
@@ -36,7 +36,7 @@ bool QValuePolicyIteration<State, Action>::policy_improvement() {
         const Return old_value = this->Q(s, this->pi(s));
         Return max_return = std::numeric_limits<Return>::lowest();
         Action maximizing_action;
-        for (Action &a : this->m_mdp->A()) {
+        for (Action &a : this->m_mdp->A(s)) {
             Return candidate_return = this->Q(s, a);
             if (candidate_return > max_return) {
                 max_return = candidate_return;

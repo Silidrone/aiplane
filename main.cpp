@@ -4,9 +4,9 @@
 #include <functional>
 #include <iostream>
 
-#include "CarRentalEnvironment.h"
 #include "VValuePolicyIteration.h"
 #include "ValueIteration.h"
+#include "barto_sutton_exercises/4_7/CarRentalEnvironment.h"
 
 template <typename State, typename Action>
 void plot_policy(Policy<State, Action> &pi) {
@@ -44,14 +44,12 @@ void plot_policy(Policy<State, Action> &pi) {
 
 int main() {
     CarRentalEnvironment car_rental_environment;
-    ValueIteration<std::vector<int>, int> value_iteration(
-        &car_rental_environment);
+    ValueIteration<std::vector<int>, int> value_iteration(&car_rental_environment);
 
     car_rental_environment.initialize();
     value_iteration.initialize();
 
-    double time_taken =
-        benchmark([&]() { value_iteration.policy_iteration(); });
+    double time_taken = benchmark([&]() { value_iteration.policy_iteration(); });
 
     std::cout << "Time taken: " << time_taken << std::endl;
 

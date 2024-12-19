@@ -1,9 +1,10 @@
 #ifndef CARRENTALENVIRONMENT_H
 #define CARRENTALENVIRONMENT_H
 
-#include "MDPCore.h"
 #include <unordered_map>
 #include <vector>
+
+#include "MDPCore.h"
 
 // Define constants used in the environment
 static constexpr double DISCOUNT_RATE = 0.9f;
@@ -19,15 +20,15 @@ using State = std::vector<int>;
 using Action = int;
 
 class CarRentalEnvironment : public MDPCore<State, Action> {
-protected:
+   protected:
     // Requests - responses for each state
     std::unordered_map<State, std::vector<std::vector<std::pair<int, int>>>, StateHash<State>> m_rrs;
 
     void generate_requests_returns_combinations(const State& s);
-    void generate_action_space();
     void generate_dynamics_p();
-public:
+
+   public:
     void initialize() override;
 };
 
-#endif // CARRENTALENVIRONMENT_H
+#endif  // CARRENTALENVIRONMENT_H
