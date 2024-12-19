@@ -1,11 +1,9 @@
 #include "VValuePolicyIteration.h"
 
-// Define the constructor
 template <typename State, typename Action>
 VValuePolicyIteration<State, Action>::VValuePolicyIteration(MDPCore<State, Action>* mdp_core)
     : PolicyIteration<State, Action>(mdp_core, DISCOUNT_RATE, POLICY_THRESHOLD_EPSILON) {}
 
-// Define the policy_evaluation function
 template <typename State, typename Action>
 void VValuePolicyIteration<State, Action>::policy_evaluation() {
     Return delta;
@@ -31,7 +29,6 @@ void VValuePolicyIteration<State, Action>::policy_evaluation() {
     } while (delta > POLICY_THRESHOLD_EPSILON);
 }
 
-// Define the policy_improvement function
 template <typename State, typename Action>
 bool VValuePolicyIteration<State, Action>::policy_improvement() {
     bool policy_stable = true;
@@ -64,5 +61,4 @@ bool VValuePolicyIteration<State, Action>::policy_improvement() {
     return policy_stable;
 }
 
-// Explicit template instantiation for the required types
 template class VValuePolicyIteration<std::vector<int>, int>;

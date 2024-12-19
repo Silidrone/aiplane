@@ -34,7 +34,7 @@ bool QValuePolicyIteration<State, Action>::policy_improvement() {
     bool policy_stable = true;
     for (State &s : this->m_mdp->S()) {
         const Return old_value = this->Q(s, this->pi(s));
-        Return max_return = std::numeric_limits<Return>::lowest();  // in case we decide to use negative rewards
+        Return max_return = std::numeric_limits<Return>::lowest();
         Action maximizing_action;
         for (Action &a : this->m_mdp->A()) {
             Return candidate_return = this->Q(s, a);
@@ -54,7 +54,4 @@ bool QValuePolicyIteration<State, Action>::policy_improvement() {
     return policy_stable;
 }
 
-// Explicit template instantiation (for the types you want to use)
-template class QValuePolicyIteration<int, int>;
-template class QValuePolicyIteration<float, float>;
-
+template class QValuePolicyIteration<std::vector<int>, int>;

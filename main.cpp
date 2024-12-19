@@ -1,5 +1,5 @@
 #include "CarRentalEnvironment.h"
-#include "VValuePolicyIteration.h"
+#include "QValuePolicyIteration.h"
 #include <matplot/matplot.h>
 
 template <typename State, typename Action>
@@ -43,7 +43,7 @@ void plot_policy(Policy<State, Action> &pi)
 
 int main() {
     CarRentalEnvironment car_rental_environment;
-    VValuePolicyIteration value_policy_iteration(&car_rental_environment);
+    QValuePolicyIteration value_policy_iteration(&car_rental_environment);
 
     car_rental_environment.initialize();
     value_policy_iteration.initialize();
