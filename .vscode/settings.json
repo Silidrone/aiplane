@@ -2,9 +2,17 @@
     "terminal.integrated.env.linux": {
         "GTK_PATH": null,
     },
-    "C_Cpp.intelliSenseEngine": "disabled",  // Disable Microsoft's IntelliSense engine
+    "C_Cpp.intelliSenseEngine": "disabled", // Disable Microsoft's IntelliSense engine
     "clangd.arguments": [
         "--compile-commands-dir=${workspaceFolder}/build"
     ],
-    "clangd.path": "/usr/bin/clangd"
+    "clangd.path": "/usr/bin/clangd",
+    "clang-format.executable": "/usr/bin/clang-format", // Path to clang-format
+    "[cpp]": {
+        "editor.defaultFormatter": "xaver.clang-format" // Use clang-format for C++ files
+    },
+    "editor.formatOnSave": true,
+    "clang-format.style": "{ BasedOnStyle: Google, IndentWidth: 4 }",
+    "editor.tabSize": 4,
+    "editor.insertSpaces": true
 }

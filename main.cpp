@@ -1,10 +1,15 @@
-#include "CarRentalEnvironment.h"
-#include "QValuePolicyIteration.h"
 #include <matplot/matplot.h>
 
+#include <chrono>
+#include <functional>
+#include <iostream>
+
+#include "CarRentalEnvironment.h"
+#include "VValuePolicyIteration.h"
+#include "ValueIteration.h"
+
 template <typename State, typename Action>
-void plot_policy(Policy<State, Action> &pi)
-{
+void plot_policy(Policy<State, Action> &pi) {
     int grid_size_x = 21;
     int grid_size_y = 21;
 
@@ -13,20 +18,17 @@ void plot_policy(Policy<State, Action> &pi)
 
     Z.resize(grid_size_x, std::vector<double>(grid_size_y, 0));
 
-    for (int i = 0; i < grid_size_x; ++i)
-    {
+    for (int i = 0; i < grid_size_x; ++i) {
         x.push_back(i);
     }
 
-    for (int j = 0; j < grid_size_y; ++j)
-    {
+    for (int j = 0; j < grid_size_y; ++j) {
         y.push_back(j);
     }
 
     auto [X, Y] = matplot::meshgrid(x, y);
 
-    for (auto &p : pi.map_container())
-    {
+    for (auto &p : pi.map_container()) {
         auto s = p.first;
         Z[s[0]][s[1]] = static_cast<double>(pi(s));
     }
@@ -40,16 +42,23 @@ void plot_policy(Policy<State, Action> &pi)
     matplot::show();
 }
 
-
 int main() {
     CarRentalEnvironment car_rental_environment;
-    QValuePolicyIteration value_policy_iteration(&car_rental_environment);
+    ValueIteration<std::vector<int>, int> value_iteration(
+        &car_rental_environment);
 
     car_rental_environment.initialize();
-    value_policy_iteration.initialize();
+    value_iteration.initialize();
 
-    value_policy_iteration.policy_iteration();
-    auto policy = value_policy_iteration.get_policy();
+    double time_taken =
+        benchmark([&]() { value_iteration.policy_iteration(); });
+
+    std::cout << "Time taken: " << time_taken << std::endl;
+
+    auto policy = value_iteration.get_policy();
+
+    policy.serialize_to_json("policy.json");
     plot_policy(policy);
 
+    return 0;
 }

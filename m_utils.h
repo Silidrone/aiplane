@@ -3,10 +3,39 @@
 
 #include <cmath>
 #include <vector>
+#include <chrono>
+#include <sstream>
 
 double pow(double b, int p);
 double next_poisson(double lambda);
 double poisson_probability(int k, double lambda);
+
+// Definition of the benchmark function
+template <typename Func>
+double benchmark(Func&& func) {
+    auto start_time = std::chrono::high_resolution_clock::now();
+
+    func();
+
+    auto end_time = std::chrono::high_resolution_clock::now();
+
+    std::chrono::duration<double> duration = end_time - start_time;
+    return duration.count();
+}
+
+namespace std {
+    template <typename T>
+    string to_string(const std::vector<T>& vec) {
+        std::ostringstream oss;
+        oss << "[";
+        for (size_t i = 0; i < vec.size(); ++i) {
+            if (i > 0) oss << ", ";
+            oss << vec[i];
+        }
+        oss << "]";
+        return oss.str();
+    }
+}
 
 template <typename T>
 struct ExtractInnerType {
