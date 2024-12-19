@@ -7,23 +7,6 @@
 template <typename State, typename Action>
 class QValuePolicyIteration : public PolicyIteration<State, Action> {
 protected:
-    void initialize_policy() override {
-        for (const State &s : this->m_mdp->S())
-        {
-            this->m_pi.set(s, 0);
-        }
-    }
-
-    void initialize_value_functions() override {
-        for (const State &s : this->m_mdp->S())
-        {
-            this->m_v[s] = 0;
-            for (const Action &a : this->m_mdp->A()) {
-                this->m_Q[{s, a}] = 0;
-            }
-        }
-    }
-
     void policy_evaluation() override
     {
         Return delta;
@@ -43,7 +26,7 @@ protected:
                         State s_prime = std::get<0>(transition);
                         Reward r = std::get<1>(transition);
                         double probability = std::get<2>(transition);
-                        new_value += probability * (r + this->m_discount_rate * q_f(s_prime, pi_f(s_prime)));
+                        new_value += probability * (r + this->m_discount_rate * boo_f(s_prime, abc(s_prime)));
                     }
 
                     this->m_Q[{s, a}] = new_value;

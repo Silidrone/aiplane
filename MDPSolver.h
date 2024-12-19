@@ -16,8 +16,22 @@ protected:
 
     MDPCore<State, Action>* m_mdp;
 
-    virtual void initialize_policy() = 0;
-    virtual void initialize_value_functions() = 0;
+    virtual void initialize_policy() {
+        for (const State &s : this->m_mdp->S())
+        {
+            this->m_pi.set(s, 0);
+        }
+    }
+
+    virtual void initialize_value_functions() {
+        for (const State &s : this->m_mdp->S())
+        {
+            this->m_v[s] = 0;
+            for (const Action &a : this->m_mdp->A()) {
+                this->m_Q[{s, a}] = 0;
+            }
+        }
+    }
 public:
     virtual ~MDPSolver() = default;
 

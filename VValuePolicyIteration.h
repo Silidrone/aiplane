@@ -10,23 +10,6 @@ protected:
     static constexpr double DISCOUNT_RATE = 0.9f;
     static constexpr double POLICY_THRESHOLD_EPSILON = 0.01f;
 
-    void initialize_policy() override {
-        for (const State &s : this->m_mdp->S())
-        {
-            this->m_pi.set(s, 0);
-        }
-    }
-
-    void initialize_value_functions() override {
-        for (const State &s : this->m_mdp->S())
-        {
-            this->m_v[s] = 0;
-            for (const Action &a : this->m_mdp->A()) {
-                this->m_Q[{s, a}] = 0;
-            }
-        }
-    }
-
     void policy_evaluation() override {
         Return delta;
         do
