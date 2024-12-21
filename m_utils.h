@@ -1,13 +1,17 @@
 #pragma once
 
-#include <cmath>
-#include <vector>
 #include <chrono>
+#include <cmath>
+#include <fstream>
+#include <nlohmann/json.hpp>  // Include JSON library
 #include <sstream>
+#include <vector>
 
 double pow(double b, int p);
 double next_poisson(double lambda);
 double poisson_probability(int k, double lambda);
+
+static const std::string output_dir = "output/";
 
 // Definition of the benchmark function
 template <typename Func>
@@ -22,19 +26,47 @@ double benchmark(Func&& func) {
     return duration.count();
 }
 
-namespace std {
-    template <typename T>
-    string to_string(const std::vector<T>& vec) {
-        std::ostringstream oss;
-        oss << "[";
-        for (size_t i = 0; i < vec.size(); ++i) {
-            if (i > 0) oss << ", ";
-            oss << vec[i];
-        }
-        oss << "]";
-        return oss.str();
+template <typename Key, typename Value, typename Hash>
+std::string to_json_string(const std::unordered_map<Key, Value, Hash>& map) {
+    nlohmann::ordered_json j;
+
+    std::vector<std::pair<Key, Value>> sorted_vector(map.begin(), map.end());
+
+    std::sort(sorted_vector.begin(), sorted_vector.end(),
+              [](const std::pair<Key, Value>& a, const std::pair<Key, Value>& b) { return a.first < b.first; });
+
+    for (const auto& entry : sorted_vector) {
+        j[std::to_string(entry.first)] = entry.second;
+    }
+
+    return j.dump(2);
+}
+
+// Template function to serialize unordered_map to JSON file
+template <typename Key, typename Value, typename Hash>
+void serialize_to_json(const std::unordered_map<Key, Value, Hash>& map, const std::string& filename) {
+    std::ofstream file(output_dir + filename);
+    if (file.is_open()) {
+        file << to_json_string(map);
+        file.close();
+    } else {
+        throw std::runtime_error("Failed to open file for writing JSON.");
     }
 }
+
+namespace std {
+template <typename T>
+string to_string(const std::vector<T>& vec) {
+    std::ostringstream oss;
+    oss << "[";
+    for (size_t i = 0; i < vec.size(); ++i) {
+        if (i > 0) oss << ", ";
+        oss << vec[i];
+    }
+    oss << "]";
+    return oss.str();
+}
+}  // namespace std
 
 template <typename T>
 struct ExtractInnerType {
@@ -70,4 +102,3 @@ struct StateActionPairHash {
         return hash1 ^ (hash2 << 1);
     }
 };
-

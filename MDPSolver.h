@@ -44,6 +44,8 @@ class MDPSolver {
     void set_q(State s, Action a, Return r) { m_Q[{s, a}] = r; }
     void set_pi(State s, Action a) { m_pi[s] = a; }
 
+    std::unordered_map<State, Return, StateHash<State>> get_v() { return m_v; }
+
     Action pi(State s) { return m_pi(s); }
 
     Return v(State s) {

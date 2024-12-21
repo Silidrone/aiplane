@@ -6,7 +6,7 @@
 #include "MDPSolver.h"
 
 static constexpr double DISCOUNT_RATE = 1;  // no discounting
-static constexpr double POLICY_THRESHOLD_EPSILON = 0.01;
+static constexpr double POLICY_THRESHOLD_EPSILON = 0.001;
 static constexpr int MAX_STAKE = 100;
 static constexpr int MIN_STAKE = 0;
 static constexpr int TAILS = 0;
