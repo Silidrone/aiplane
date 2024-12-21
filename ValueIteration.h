@@ -1,16 +1,19 @@
 #pragma once
 
 #include <limits>
+
 #include "MDPSolver.h"
 
 template <typename State, typename Action>
 class ValueIteration : public MDPSolver<State, Action> {
-protected:
-    double DISCOUNT_RATE = 0.9f;
-    double VALUE_ITERATION_THRESHOLD_EPSILON = 0.01f;
-    void update_final_policy();
-public:
-    ValueIteration(MDPCore<State, Action>* mdp_core);
+   protected:
+    double m_discount_rate;
+    double m_policy_threshold;
 
-    void policy_iteration();
+    void update_final_policy();
+
+   public:
+    ValueIteration(MDPCore<State, Action>*, const double, const double);
+
+    void value_iteration();
 };

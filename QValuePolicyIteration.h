@@ -1,14 +1,15 @@
 #pragma once
 
-#include "PolicyIteration.h"
 #include <limits>
+
+#include "PolicyIteration.h"
 
 template <typename State, typename Action>
 class QValuePolicyIteration : public PolicyIteration<State, Action> {
-protected:
+   protected:
     void policy_evaluation() override;
     bool policy_improvement() override;
 
-public:
-    explicit QValuePolicyIteration(MDPCore<State, Action>* mdp_core);
+   public:
+    explicit QValuePolicyIteration(MDPCore<State, Action>*, const double, const double);
 };

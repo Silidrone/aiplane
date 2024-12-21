@@ -1,10 +1,12 @@
 #include "ValueIteration.h"
 
 template <typename State, typename Action>
-ValueIteration<State, Action>::ValueIteration(MDPCore<State, Action> *mdp_core) : MDPSolver<State, Action>(mdp_core) {}
+ValueIteration<State, Action>::ValueIteration(MDPCore<State, Action> *mdp_core, const double discount_rate,
+                                              const double policy_threshold)
+    : MDPSolver<State, Action>(mdp_core), m_discount_rate(discount_rate), m_policy_threshold(policy_threshold) {}
 
 template <typename State, typename Action>
-void ValueIteration<State, Action>::policy_iteration() {
+void ValueIteration<State, Action>::value_iteration() {
     Return delta;
     bool policy_stable;
     do {
@@ -20,7 +22,7 @@ void ValueIteration<State, Action>::policy_iteration() {
                     State s_prime = std::get<0>(transition);
                     Reward r = std::get<1>(transition);
                     double probability = std::get<2>(transition);
-                    new_value += probability * (r + DISCOUNT_RATE * this->v(s_prime));
+                    new_value += probability * (r + this->m_discount_rate * this->v(s_prime));
                 }
 
                 if (new_value > max_value) {
@@ -30,7 +32,7 @@ void ValueIteration<State, Action>::policy_iteration() {
             this->m_v[s] = max_value;
             delta = std::max(delta, std::abs(old_value - max_value));
         }
-    } while (delta > VALUE_ITERATION_THRESHOLD_EPSILON);
+    } while (delta > this->m_policy_threshold);
 
     update_final_policy();
 }
@@ -49,7 +51,7 @@ void ValueIteration<State, Action>::update_final_policy() {
                 State s_prime = std::get<0>(transition);
                 Reward r = std::get<1>(transition);
                 double probability = std::get<2>(transition);
-                new_value += probability * (r + DISCOUNT_RATE * this->v(s_prime));
+                new_value += probability * (r + this->m_discount_rate * this->v(s_prime));
             }
 
             if (new_value > max_value) {

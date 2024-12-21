@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "MDPCore.h"
+#include "Policy.h"
 
 // Define constants used in the environment
 static constexpr double DISCOUNT_RATE = 0.9f;
@@ -13,7 +14,7 @@ static constexpr int MAX_CARS_COUNT_PER_LOCATION = 20;
 static constexpr int REQUEST_FULFILLMENT_REWARD = 10;
 static constexpr int COST_OF_MOVING_A_CAR = 2;
 static constexpr int NUMBER_OF_LOCATIONS = 2;
-static constexpr double POLICY_THRESHOLD_EPSILON = 0.01;
+static constexpr double POLICY_THRESHOLD_EPSILON = 0.1;
 
 using State = std::vector<int>;
 using Action = int;
@@ -27,5 +28,6 @@ class CarRentalEnvironment : public MDPCore<State, Action> {
     void generate_dynamics_p();
 
    public:
-    void initialize() override;
+    void initialize();
+    void plot_policy(Policy<State, Action>&);
 };

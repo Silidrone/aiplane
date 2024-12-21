@@ -17,15 +17,15 @@ class MDPSolver {
 
     virtual void initialize_policy() {
         for (const State &s : this->m_mdp->S()) {
-            this->m_pi.set(s, 0);
+            m_pi.set(s, 0);
         }
     }
 
     virtual void initialize_value_functions() {
         for (const State &s : this->m_mdp->S()) {
-            this->m_v[s] = 0;
+            m_v[s] = 0;
             for (const Action &a : this->m_mdp->A(s)) {
-                this->m_Q[{s, a}] = 0;
+                m_Q[{s, a}] = 0;
             }
         }
     }
@@ -39,6 +39,10 @@ class MDPSolver {
         initialize_policy();
         initialize_value_functions();
     }
+
+    void set_v(State s, Return r) { m_v[s] = r; }
+    void set_q(State s, Action a, Return r) { m_Q[{s, a}] = r; }
+    void set_pi(State s, Action a) { m_pi[s] = a; }
 
     Action pi(State s) { return m_pi(s); }
 
@@ -62,4 +66,3 @@ class MDPSolver {
 
     Policy<State, Action> get_policy() { return m_pi; }
 };
-

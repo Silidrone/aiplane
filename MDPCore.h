@@ -7,10 +7,7 @@
 #include <unordered_map>
 #include <vector>
 
-using Reward = double;
-using Return = double;
-using TimeStep = int;
-using Probability = double;
+#include "m_types.h"
 
 template <typename State, typename Action>
 class MDPCore {
@@ -25,20 +22,12 @@ class MDPCore {
     Dynamics m_dynamics;                                                   // Dynamics p function
     TimeStep m_T;
 
-    virtual void initialize_state_space(){};
-    virtual void initialize_action_space() {}
-    virtual void initialize_dynamics(){};
-
    public:
     virtual ~MDPCore() = default;
 
     MDPCore() : m_T(0) {}
 
-    virtual void initialize() {
-        initialize_state_space();
-        initialize_action_space();
-        initialize_dynamics();
-    }
+    virtual void initialize() = 0;
 
     void increment_time_step() { ++m_T; }
 

@@ -1,8 +1,9 @@
 #include "QValuePolicyIteration.h"
 
 template <typename State, typename Action>
-QValuePolicyIteration<State, Action>::QValuePolicyIteration(MDPCore<State, Action> *mdp_core)
-    : PolicyIteration<State, Action>(mdp_core, 0.9f, 0.01f) {}
+QValuePolicyIteration<State, Action>::QValuePolicyIteration(MDPCore<State, Action> *mdp_core,
+                                                            const double discount_rate, const double policy_threshold)
+    : PolicyIteration<State, Action>(mdp_core, discount_rate, policy_threshold) {}
 
 template <typename State, typename Action>
 void QValuePolicyIteration<State, Action>::policy_evaluation() {
@@ -26,7 +27,7 @@ void QValuePolicyIteration<State, Action>::policy_evaluation() {
                 delta = std::max(delta, std::abs(old_value - new_value));
             }
         }
-    } while (delta > this->m_policy_evaluation_threshold);
+    } while (delta > this->m_policy_threshold);
 }
 
 template <typename State, typename Action>
