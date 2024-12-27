@@ -3,7 +3,7 @@
 template <typename State, typename Action>
 QValuePolicyIteration<State, Action>::QValuePolicyIteration(MDPCore<State, Action> *mdp_core,
                                                             const double discount_rate, const double policy_threshold)
-    : PolicyIteration<State, Action>(mdp_core, discount_rate, policy_threshold) {}
+    : GPI<State, Action>(mdp_core, discount_rate, policy_threshold) {}
 
 template <typename State, typename Action>
 void QValuePolicyIteration<State, Action>::policy_evaluation() {

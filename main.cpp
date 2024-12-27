@@ -36,7 +36,7 @@ int main() {
     mdp_solver.set_v(MIN_STAKE, 0);
     mdp_solver.set_v(MAX_STAKE, 0);
 
-    double time_taken = benchmark([&]() { mdp_solver.value_iteration(); });
+    double time_taken = benchmark([&]() { mdp_solver.policy_iteration(); });
 
     mdp_solver.set_v(MAX_STAKE, 1);
 

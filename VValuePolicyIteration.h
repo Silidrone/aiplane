@@ -1,10 +1,10 @@
 #pragma once
 #include <limits>
 
-#include "PolicyIteration.h"
+#include "GPI.h"
 
 template <typename State, typename Action>
-class VValuePolicyIteration : public PolicyIteration<State, Action> {
+class VValuePolicyIteration : public GPI<State, Action> {
    protected:
     void policy_evaluation() override;
     bool policy_improvement() override;

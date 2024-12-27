@@ -22,7 +22,7 @@ find_package(nlohmann_json 3.2.0 REQUIRED)
 set(CORE_HEADERS
     ${CMAKE_SOURCE_DIR}/MDPCore.h
     ${CMAKE_SOURCE_DIR}/MDPSolver.h
-    ${CMAKE_SOURCE_DIR}/PolicyIteration.h
+    ${CMAKE_SOURCE_DIR}/GPI.h
     ${CMAKE_SOURCE_DIR}/QValuePolicyIteration.h
     ${CMAKE_SOURCE_DIR}/VValuePolicyIteration.h
     ${CMAKE_SOURCE_DIR}/m_utils.h
