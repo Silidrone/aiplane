@@ -20,7 +20,7 @@ find_package(PythonLibs 3.10 REQUIRED)
 find_package(nlohmann_json 3.2.0 REQUIRED)
 
 set(CORE_HEADERS
-    ${CMAKE_SOURCE_DIR}/MDPCore.h
+    ${CMAKE_SOURCE_DIR}/MDP.h
     ${CMAKE_SOURCE_DIR}/MDPSolver.h
     ${CMAKE_SOURCE_DIR}/GPI.h
     ${CMAKE_SOURCE_DIR}/QValuePolicyIteration.h

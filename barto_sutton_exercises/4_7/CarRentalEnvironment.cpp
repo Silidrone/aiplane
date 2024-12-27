@@ -75,8 +75,8 @@ void CarRentalEnvironment::initialize() {
         for (int l2 = 0; l2 <= MAX_CARS_COUNT_PER_LOCATION; l2++) {
             State s = {l1, l2};
             m_S.push_back(s);
-            for (int a = -1 * std::min(std::min(5, MAX_CARS_COUNT_PER_LOCATION - l2), l1);
-                 a <= std::min(std::min(5, MAX_CARS_COUNT_PER_LOCATION - l1), l2); a++) {
+            for (int a = -1 * std::min(std::min(4, l2), MAX_CARS_COUNT_PER_LOCATION - l1);
+                 a <= std::min(std::min(5, l1), MAX_CARS_COUNT_PER_LOCATION - l2); a++) {
                 m_A[s].emplace_back(a);
             }
             generate_requests_returns_combinations(s);

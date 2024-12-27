@@ -1,8 +1,8 @@
 #include "VValuePolicyIteration.h"
 
 template <typename State, typename Action>
-VValuePolicyIteration<State, Action>::VValuePolicyIteration(MDPCore<State, Action> *mdp_core,
-                                                            const double discount_rate, const double policy_threshold)
+VValuePolicyIteration<State, Action>::VValuePolicyIteration(MDP<State, Action> *mdp_core, const double discount_rate,
+                                                            const double policy_threshold)
     : GPI<State, Action>(mdp_core, discount_rate, policy_threshold) {}
 
 template <typename State, typename Action>
@@ -11,7 +11,7 @@ void VValuePolicyIteration<State, Action>::policy_evaluation() {
     do {
         delta = 0;
         for (State &s : this->m_mdp->S()) {
-            Action a = this->pi(s);
+            Action a = this->target_policy(s);
 
             const Return old_value = this->v(s);
             Return new_value = 0;
@@ -53,7 +53,7 @@ bool VValuePolicyIteration<State, Action>::policy_improvement() {
             }
         }
 
-        this->m_pi.set(s, maximizing_action);
+        this->set_target_policy(s, maximizing_action);
 
         if (old_value != max_value) {
             policy_stable = false;

@@ -11,5 +11,5 @@ class QValuePolicyIteration : public GPI<State, Action> {
     bool policy_improvement() override;
 
    public:
-    explicit QValuePolicyIteration(MDPCore<State, Action>*, const double, const double);
+    explicit QValuePolicyIteration(MDP<State, Action>*, const double, const double);
 };

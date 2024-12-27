@@ -3,7 +3,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include "MDPCore.h"
+#include "MDP.h"
 #include "Policy.h"
 
 // Define constants used in the environment
@@ -19,7 +19,7 @@ static constexpr double POLICY_THRESHOLD_EPSILON = 0.1;
 using State = std::vector<int>;
 using Action = int;
 
-class CarRentalEnvironment : public MDPCore<State, Action> {
+class CarRentalEnvironment : public MDP<State, Action> {
    protected:
     // Requests - responses for each state
     std::unordered_map<State, std::vector<std::vector<std::pair<int, int>>>, StateHash<State>> m_rrs;

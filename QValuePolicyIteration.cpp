@@ -1,8 +1,8 @@
 #include "QValuePolicyIteration.h"
 
 template <typename State, typename Action>
-QValuePolicyIteration<State, Action>::QValuePolicyIteration(MDPCore<State, Action> *mdp_core,
-                                                            const double discount_rate, const double policy_threshold)
+QValuePolicyIteration<State, Action>::QValuePolicyIteration(MDP<State, Action> *mdp_core, const double discount_rate,
+                                                            const double policy_threshold)
     : GPI<State, Action>(mdp_core, discount_rate, policy_threshold) {}
 
 template <typename State, typename Action>
@@ -20,7 +20,8 @@ void QValuePolicyIteration<State, Action>::policy_evaluation() {
                     State s_prime = std::get<0>(transition);
                     Reward r = std::get<1>(transition);
                     double probability = std::get<2>(transition);
-                    new_value += probability * (r + this->m_discount_rate * this->Q(s_prime, this->pi(s_prime)));
+                    new_value +=
+                        probability * (r + this->m_discount_rate * this->Q(s_prime, this->target_policy(s_prime)));
                 }
 
                 this->m_Q[{s, a}] = new_value;
@@ -34,7 +35,7 @@ template <typename State, typename Action>
 bool QValuePolicyIteration<State, Action>::policy_improvement() {
     bool policy_stable = true;
     for (State &s : this->m_mdp->S()) {
-        const Return old_value = this->Q(s, this->pi(s));
+        const Return old_value = this->Q(s, this->target_policy(s));
         Return max_return = std::numeric_limits<Return>::lowest();
         Action maximizing_action;
         for (Action &a : this->m_mdp->A(s)) {
@@ -45,7 +46,7 @@ bool QValuePolicyIteration<State, Action>::policy_improvement() {
             }
         }
 
-        this->m_pi.set(s, maximizing_action);
+        this->set_target_policy(s, maximizing_action);
 
         if (old_value != max_return) {
             policy_stable = false;

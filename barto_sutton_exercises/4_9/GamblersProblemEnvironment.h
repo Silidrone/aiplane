@@ -19,7 +19,7 @@ static std::vector<int> coin_flips = {TAILS, HEADS};
 using State = int;
 using Action = int;
 
-class GamblersProblemEnvironment : public MDPCore<State, Action> {
+class GamblersProblemEnvironment : public MDP<State, Action> {
    public:
     void initialize() override;
     void plot_policy(Policy<State, Action> &);

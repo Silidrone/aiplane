@@ -10,5 +10,5 @@ class VValuePolicyIteration : public GPI<State, Action> {
     bool policy_improvement() override;
 
    public:
-    explicit VValuePolicyIteration(MDPCore<State, Action>*, const double, const double);
+    explicit VValuePolicyIteration(MDP<State, Action>*, const double, const double);
 };

@@ -3,7 +3,7 @@
 #include <limits>
 
 template <typename State, typename Action>
-ValueIteration<State, Action>::ValueIteration(MDPCore<State, Action> *mdp_core, const double discount_rate,
+ValueIteration<State, Action>::ValueIteration(MDP<State, Action> *mdp_core, const double discount_rate,
                                               const double policy_threshold)
     : GPI<State, Action>(mdp_core, discount_rate, policy_threshold) {}
 
@@ -61,7 +61,7 @@ void ValueIteration<State, Action>::update_final_policy() {
                 max_action = a;
             }
         }
-        this->m_pi[s] = max_action;
+        this->set_target_policy(s, max_action);
     }
 }
 

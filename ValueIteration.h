@@ -8,7 +8,7 @@ class ValueIteration : public GPI<State, Action> {
     void update_final_policy();
 
    public:
-    ValueIteration(MDPCore<State, Action>*, const double, const double);
+    ValueIteration(MDP<State, Action>*, const double, const double);
 
     void policy_iteration() override;
 };
