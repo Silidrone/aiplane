@@ -30,7 +30,7 @@ int main() {
     GamblersProblemEnvironment environment;
     environment.initialize();
 
-    ValueIteration<State, Action> mdp_solver(&environment, DISCOUNT_RATE, POLICY_THRESHOLD_EPSILON);
+    ValueIteration<State, Action> mdp_solver(environment, DISCOUNT_RATE, POLICY_THRESHOLD_EPSILON);
     mdp_solver.initialize();
 
     mdp_solver.set_v(MIN_STAKE, 0);
@@ -42,12 +42,12 @@ int main() {
 
     std::cout << "Time taken: " << time_taken << std::endl;
 
-    auto policy = mdp_solver.get_target_policy();
+    auto policy = mdp_solver.get_policy();
 
-    // serialize_to_json(policy.map_container(), "policy.json");
+    serialize_to_json(policy.map_container(), "policy.json");
     // serialize_to_json(mdp_solver.get_v(), "state-value-function.json");
-    // environment.plot_policy(policy);
-    plot_v_f(mdp_solver);
+    environment.plot_policy(policy);
+    // plot_v_f(mdp_solver);
 
     return 0;
 }

@@ -102,3 +102,15 @@ struct StateActionPairHash {
         return hash1 ^ (hash2 << 1);
     }
 };
+
+#include "m_types.h"
+
+template <typename State, typename Action>
+class MDP;
+
+template <typename State, typename Action>
+class StochasticPolicy;
+
+template <typename State, typename Action>
+std::vector<std::tuple<State, Action, Reward, State>> generate_episode(MDP<State, Action>&,
+                                                                       StochasticPolicy<State, Action>);

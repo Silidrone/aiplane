@@ -1,21 +1,27 @@
 #include "VValuePolicyIteration.h"
 
 template <typename State, typename Action>
-VValuePolicyIteration<State, Action>::VValuePolicyIteration(MDP<State, Action> *mdp_core, const double discount_rate,
+VValuePolicyIteration<State, Action>::VValuePolicyIteration(MDP<State, Action> &mdp_core, const double discount_rate,
                                                             const double policy_threshold)
     : GPI<State, Action>(mdp_core, discount_rate, policy_threshold) {}
+
+template <typename State, typename Action>
+void VValuePolicyIteration<State, Action>::initialize() {
+    GPI<State, Action>::initialize();
+    this->m_policy.initialize_with_first_action(this->m_mdp);
+}
 
 template <typename State, typename Action>
 void VValuePolicyIteration<State, Action>::policy_evaluation() {
     Return delta;
     do {
         delta = 0;
-        for (State &s : this->m_mdp->S()) {
-            Action a = this->target_policy(s);
+        for (State &s : this->m_mdp.S()) {
+            Action a = this->m_policy(s);
 
             const Return old_value = this->v(s);
             Return new_value = 0;
-            auto transitions = this->m_mdp->p(s, a);
+            auto transitions = this->m_mdp.p(s, a);
 
             for (auto transition : transitions) {
                 State s_prime = std::get<0>(transition);
@@ -33,14 +39,14 @@ void VValuePolicyIteration<State, Action>::policy_evaluation() {
 template <typename State, typename Action>
 bool VValuePolicyIteration<State, Action>::policy_improvement() {
     bool policy_stable = true;
-    for (State &s : this->m_mdp->S()) {
+    for (State &s : this->m_mdp.S()) {
         const Return old_value = this->v(s);
         Return max_value = std::numeric_limits<Return>::lowest();  // in case we decide to use
                                                                    // negative rewards
         Action maximizing_action;
-        for (Action &a : this->m_mdp->A(s)) {
+        for (Action &a : this->m_mdp.A(s)) {
             Return state_value = 0;
-            auto transitions = this->m_mdp->p(s, a);
+            auto transitions = this->m_mdp.p(s, a);
             for (auto &transition : transitions) {
                 State s_prime = std::get<0>(transition);
                 Reward r = std::get<1>(transition);
@@ -53,7 +59,7 @@ bool VValuePolicyIteration<State, Action>::policy_improvement() {
             }
         }
 
-        this->set_target_policy(s, maximizing_action);
+        this->m_policy.set(s, maximizing_action);
 
         if (old_value != max_value) {
             policy_stable = false;

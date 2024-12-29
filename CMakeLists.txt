@@ -26,7 +26,10 @@ set(CORE_HEADERS
     ${CMAKE_SOURCE_DIR}/QValuePolicyIteration.h
     ${CMAKE_SOURCE_DIR}/VValuePolicyIteration.h
     ${CMAKE_SOURCE_DIR}/m_utils.h
-    ${CMAKE_SOURCE_DIR}/Policy.h
+    ${CMAKE_SOURCE_DIR}/DeterministicPolicy.h
+    ${CMAKE_SOURCE_DIR}/StochasticPolicy.h
+    ${CMAKE_SOURCE_DIR}/ESoftPolicy.h
+    ${CMAKE_SOURCE_DIR}/MC_FV.h
     ${CMAKE_SOURCE_DIR}/ValueIteration.h
 )
 
@@ -35,6 +38,7 @@ set(CORE_SOURCES
     ${CMAKE_SOURCE_DIR}/VValuePolicyIteration.cpp
     ${CMAKE_SOURCE_DIR}/m_utils.cpp
     ${CMAKE_SOURCE_DIR}/ValueIteration.cpp
+    ${CMAKE_SOURCE_DIR}/MC_FV.cpp
     ${CMAKE_SOURCE_DIR}/main.cpp
 )
 

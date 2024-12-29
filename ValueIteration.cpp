@@ -3,7 +3,7 @@
 #include <limits>
 
 template <typename State, typename Action>
-ValueIteration<State, Action>::ValueIteration(MDP<State, Action> *mdp_core, const double discount_rate,
+ValueIteration<State, Action>::ValueIteration(MDP<State, Action> &mdp_core, const double discount_rate,
                                               const double policy_threshold)
     : GPI<State, Action>(mdp_core, discount_rate, policy_threshold) {}
 
@@ -13,12 +13,12 @@ void ValueIteration<State, Action>::policy_iteration() {
     bool policy_stable;
     do {
         delta = 0;
-        for (State &s : this->m_mdp->S()) {
+        for (State &s : this->m_mdp.S()) {
             Return old_value = this->v(s);
             Return max_value = std::numeric_limits<Return>::lowest();
-            for (Action &a : this->m_mdp->A(s)) {
+            for (Action &a : this->m_mdp.A(s)) {
                 Return new_value = 0;
-                auto transitions = this->m_mdp->p(s, a);
+                auto transitions = this->m_mdp.p(s, a);
 
                 for (auto transition : transitions) {
                     State s_prime = std::get<0>(transition);
@@ -41,13 +41,13 @@ void ValueIteration<State, Action>::policy_iteration() {
 
 template <typename State, typename Action>
 void ValueIteration<State, Action>::update_final_policy() {
-    for (State &s : this->m_mdp->S()) {
+    for (State &s : this->m_mdp.S()) {
         Return old_value = this->v(s);
         Action max_action;
         Return max_value = std::numeric_limits<Return>::lowest();
-        for (Action &a : this->m_mdp->A(s)) {
+        for (Action &a : this->m_mdp.A(s)) {
             Return new_value = 0;
-            auto transitions = this->m_mdp->p(s, a);
+            auto transitions = this->m_mdp.p(s, a);
 
             for (auto transition : transitions) {
                 State s_prime = std::get<0>(transition);
@@ -61,7 +61,7 @@ void ValueIteration<State, Action>::update_final_policy() {
                 max_action = a;
             }
         }
-        this->set_target_policy(s, max_action);
+        this->m_policy.set(s, max_action);
     }
 }
 

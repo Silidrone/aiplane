@@ -6,7 +6,7 @@
 #include "./m_utils.h"
 
 template <typename State, typename Action>
-class Policy {
+class DeterministicPolicy {
    protected:
     std::unordered_map<State, Action, StateHash<State>> m_policy_map;
 
@@ -23,7 +23,14 @@ class Policy {
 
     void set(const State& state, const Action& action) { m_policy_map[state] = action; }
 
-    bool has(const State& state) const { return m_policy_map.contains(state); }
-
     const std::unordered_map<State, Action, StateHash<State>>& map_container() const { return m_policy_map; }
+
+    void initialize_with_first_action(const MDP<State, Action>& mdp) {
+        for (const auto& state : mdp.S()) {
+            for (const auto& act : mdp.A(state)) {
+                m_policy_map[state] = act;
+                break;
+            }
+        }
+    }
 };

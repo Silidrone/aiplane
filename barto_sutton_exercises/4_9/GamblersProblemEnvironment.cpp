@@ -27,7 +27,7 @@ void GamblersProblemEnvironment::initialize() {
     }
 }
 
-void GamblersProblemEnvironment::plot_policy(Policy<State, Action>& pi) {
+void GamblersProblemEnvironment::plot_policy(DeterministicPolicy<State, Action>& pi) {
     matplot::vector_1d x, y;
 
     for (int i = MIN_STAKE + 1; i < MAX_STAKE; ++i) {

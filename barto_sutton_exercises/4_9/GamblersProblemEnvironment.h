@@ -3,7 +3,8 @@
 #include <unordered_map>
 #include <vector>
 
-#include "MDPSolver.h"
+#include "DeterministicPolicy.h"
+#include "MDP.h"
 
 static constexpr double DISCOUNT_RATE = 1;  // no discounting
 static constexpr double POLICY_THRESHOLD_EPSILON = 0.001;
@@ -22,5 +23,5 @@ using Action = int;
 class GamblersProblemEnvironment : public MDP<State, Action> {
    public:
     void initialize() override;
-    void plot_policy(Policy<State, Action> &);
+    void plot_policy(DeterministicPolicy<State, Action> &);
 };

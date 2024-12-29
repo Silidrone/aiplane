@@ -85,7 +85,7 @@ void CarRentalEnvironment::initialize() {
 
     generate_dynamics_p();
 }
-void CarRentalEnvironment::plot_policy(Policy<State, Action>& pi) {
+void CarRentalEnvironment::plot_policy(DeterministicPolicy<State, Action>& pi) {
     int grid_size_x = 21;
     int grid_size_y = 21;
 

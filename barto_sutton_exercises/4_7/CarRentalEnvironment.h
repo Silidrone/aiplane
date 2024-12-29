@@ -3,8 +3,8 @@
 #include <unordered_map>
 #include <vector>
 
+#include "DeterministicPolicy.h"
 #include "MDP.h"
-#include "Policy.h"
 
 // Define constants used in the environment
 static constexpr double DISCOUNT_RATE = 0.9f;
@@ -29,5 +29,5 @@ class CarRentalEnvironment : public MDP<State, Action> {
 
    public:
     void initialize();
-    void plot_policy(Policy<State, Action>&);
+    void plot_policy(DeterministicPolicy<State, Action>&);
 };
