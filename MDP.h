@@ -37,13 +37,11 @@ class MDP {
     std::vector<Transition> p(const State& s, const Action& a) const { return m_dynamics.at({s, a}); }
     Dynamics dynamics() const { return m_dynamics; }
 
-    virtual State reset() { throw std::logic_error("reset() must be implemented by the specific environment."); }
+    virtual State reset() { throw std::logic_error("The reset function is not available in this environment."); }
 
-    virtual std::pair<State, Reward> step(const Action& action) {
-        throw std::logic_error("step() must be implemented by the specific environment.");
+    virtual std::pair<State, Reward> step(const State& state, const Action& action) {
+        throw std::logic_error("The step function is not available in this environment.");
     }
 
-    virtual bool is_terminal(const State& state) const {
-        return std::find(m_ST.begin(), m_ST.end(), state) != m_ST.end();
-    }
+    virtual bool is_terminal(const State& state) { return std::find(m_ST.begin(), m_ST.end(), state) != m_ST.end(); }
 };

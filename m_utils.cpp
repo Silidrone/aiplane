@@ -1,10 +1,25 @@
 #include "m_utils.h"
 
-#include <cstdlib>
-#include <stdexcept>
+#include <DeterministicPolicy.h>
+#include <MDP.h>
 
-#include "MDP.h"
-#include "StochasticPolicy.h"
+#include <algorithm>
+#include <random>
+
+int random_value(int a, int b) {
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<> dis(a, b);
+
+    return dis(gen);
+}
+
+double random_value(double a, double b) {
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_real_distribution<> dis(a, b);
+    return dis(gen);
+}
 
 double pow(const double b, const int p) {
     if (p == 0) return 1;
@@ -20,8 +35,8 @@ double next_poisson(const double lambda) {
 
     do {
         k++;
-        const double u = rand() / (RAND_MAX + 1.0);  // Generate uniform random number u between 0 and 1
-        p *= u;                                      // Update probability
+        const double u = random_value(0.0, 1.0);
+        p *= u;
     } while (p > L);
 
     return k - 1;  // Subtract 1 because we start from 0 events
@@ -36,16 +51,16 @@ double poisson_probability(const int k, const double lambda) {
 }
 
 template <typename State, typename Action>
-std::vector<std::tuple<State, Action, Reward, State>> generate_episode(
-    MDP<State, Action>& mdp, StochasticPolicy<State, Action> behavior_policy) {
-    std::vector<std::tuple<State, Action, Reward, State>> episode;
+std::vector<std::tuple<State, Action, Reward>> generate_episode(MDP<State, Action>& mdp,
+                                                                DeterministicPolicy<State, Action> behavior_policy) {
+    std::vector<std::tuple<State, Action, Reward>> episode;
     State state = mdp.reset();
     bool done = false;
 
     while (!done) {
         Action action = behavior_policy.sample(state);
-        auto [next_state, reward] = mdp.step(action);
-        episode.emplace_back(state, action, reward, next_state);
+        auto [next_state, reward] = mdp.step(state, action);
+        episode.emplace_back(state, action, reward);
         state = next_state;
         done = mdp.is_terminal(state);
     }
@@ -53,8 +68,5 @@ std::vector<std::tuple<State, Action, Reward, State>> generate_episode(
     return episode;
 }
 
-template std::vector<std::tuple<std::vector<int>, int, double, std::vector<int>>>
-generate_episode<std::vector<int>, int>(MDP<std::vector<int>, int>&, StochasticPolicy<std::vector<int>, int>);
-
-template std::vector<std::tuple<int, int, double, int>> generate_episode<int, int>(MDP<int, int>&,
-                                                                                   StochasticPolicy<int, int>);
+template std::vector<std::tuple<std::tuple<int, int, bool>, bool, double>> generate_episode(
+    MDP<std::tuple<int, int, bool>, bool>&, DeterministicPolicy<std::tuple<int, int, bool>, bool>);

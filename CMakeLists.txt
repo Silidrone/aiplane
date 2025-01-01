@@ -38,18 +38,19 @@ set(CORE_SOURCES
     ${CMAKE_SOURCE_DIR}/VValuePolicyIteration.cpp
     ${CMAKE_SOURCE_DIR}/m_utils.cpp
     ${CMAKE_SOURCE_DIR}/ValueIteration.cpp
-    ${CMAKE_SOURCE_DIR}/MC_FV.cpp
     ${CMAKE_SOURCE_DIR}/main.cpp
 )
 
 set(EXERCISES_HEADERS
     ${CMAKE_SOURCE_DIR}/barto_sutton_exercises/4_7/CarRentalEnvironment.h
     ${CMAKE_SOURCE_DIR}/barto_sutton_exercises/4_9/GamblersProblemEnvironment.h
+    ${CMAKE_SOURCE_DIR}/barto_sutton_exercises/5_1/Blackjack.h
 )
 
 set(EXERCISES_SOURCES
     ${CMAKE_SOURCE_DIR}/barto_sutton_exercises/4_7/CarRentalEnvironment.cpp
     ${CMAKE_SOURCE_DIR}/barto_sutton_exercises/4_9/GamblersProblemEnvironment.cpp
+    ${CMAKE_SOURCE_DIR}/barto_sutton_exercises/5_1/Blackjack.cpp
 )
 
 add_executable(output_executable ${CORE_SOURCES} ${CORE_HEADERS} ${EXERCISES_HEADERS} ${EXERCISES_SOURCES})

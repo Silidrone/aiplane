@@ -21,6 +21,8 @@ class DeterministicPolicy {
 
     Action& operator[](const State& state) { return m_policy_map[state]; }
 
+    Action sample(const State& state) { return m_policy_map[state]; }
+
     void set(const State& state, const Action& action) { m_policy_map[state] = action; }
 
     const std::unordered_map<State, Action, StateHash<State>>& map_container() const { return m_policy_map; }

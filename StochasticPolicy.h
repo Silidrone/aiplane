@@ -62,19 +62,12 @@ class StochasticPolicy {
     }
 
     Action sample(const State& state) {
-        double random_value = []() {
-            std::random_device rd;
-            std::mt19937 gen(rd());
-            std::uniform_real_distribution<> dis(0.0, 1.0);
-            return dis(gen);
-        }();
-
         double cumulative_probability = 0.0;
         for (const auto& [key, probability] : m_policy_map) {
             const auto& [s, action] = key;
             if (s == state) {
                 cumulative_probability += probability;
-                if (random_value <= cumulative_probability) {
+                if (random_value(0.0, 1.0) <= cumulative_probability) {
                     return action;
                 }
             }

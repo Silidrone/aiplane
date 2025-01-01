@@ -33,6 +33,7 @@ class MDPSolver {
     void set_q(State s, Action a, Return r) { m_Q[{s, a}] = r; }
 
     std::unordered_map<State, Return, StateHash<State>> get_v() { return m_v; }
+    std::unordered_map<std::pair<State, Action>, Return, StateActionPairHash<State, Action>> get_Q() { return m_Q; }
 
     Return v(State s) {
         auto it = m_v.find(s);
