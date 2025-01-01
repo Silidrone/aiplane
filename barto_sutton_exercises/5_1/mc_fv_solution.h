@@ -6,6 +6,7 @@
 #include <iostream>
 
 #include "DeterministicPolicy.h"
+#include "ESoftPolicy.h"
 #include "MC_FV.h"
 #include "barto_sutton_exercises/5_1/Blackjack.h"
 
@@ -66,28 +67,14 @@ inline void plot_v_f(MDPSolver<State, Action>& mdp_solver) {
     matplot::show();
 }
 
-inline void construct_player_policy(DeterministicPolicy<State, Action>& policy) {
-    for (int player_sum = MIN_PLAYER_SUM; player_sum <= MAX_SUM; ++player_sum) {
-        for (int dealer_face_up = 1; dealer_face_up <= 10; ++dealer_face_up) {
-            for (bool usable_ace : {false, true}) {
-                State state = {player_sum, dealer_face_up, usable_ace};
-
-                bool action = (player_sum < 20);
-
-                policy.set(state, action);
-            }
-        }
-    }
-}
-
 inline int blackjack_main() {
     Blackjack environment;
     environment.initialize();
 
-    DeterministicPolicy<State, Action> blackjack_player_policy;
-    construct_player_policy(blackjack_player_policy);
+    ESoftPolicy<State, Action> policy(0.1);
+    policy.initialize(environment.S(), environment.A());
 
-    MC_FV<State, Action> mdp_solver(environment, &blackjack_player_policy, DISCOUNT_RATE, N_OF_EPISODES);
+    MC_FV<State, Action> mdp_solver(environment, &policy, DISCOUNT_RATE, N_OF_EPISODES);
     mdp_solver.initialize();
 
     double time_taken = benchmark([&]() { mdp_solver.policy_iteration(); });

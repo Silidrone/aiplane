@@ -35,7 +35,7 @@ void GamblersProblemEnvironment::plot_policy(DeterministicPolicy<State, Action>&
     }
 
     for (int i = MIN_STAKE + 1; i < MAX_STAKE; ++i) {
-        y.push_back(static_cast<double>(pi(i)));
+        y.push_back(static_cast<double>(pi.sample(i)));
     }
 
     matplot::plot(x, y);

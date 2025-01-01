@@ -7,9 +7,9 @@
 template <typename State, typename Action>
 class VValuePolicyIteration : public GPI<State, Action> {
    protected:
+    DeterministicPolicy<State, Action> m_policy;
     void policy_evaluation() override;
     bool policy_improvement() override;
-    DeterministicPolicy<State, Action> m_policy;
     void initialize() override;
 
    public:

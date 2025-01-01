@@ -153,13 +153,11 @@ template <typename T>
 std::string to_string(const std::vector<T>& vec);
 }
 
-// Forward declarations for templates
 template <typename State, typename Action>
 class MDP;
 
 template <typename State, typename Action>
-class DeterministicPolicy;
+class Policy;
 
 template <typename State, typename Action>
-std::vector<std::tuple<State, Action, Reward>> generate_episode(MDP<State, Action>&,
-                                                                DeterministicPolicy<State, Action>);
+std::vector<std::tuple<State, Action, Reward>> generate_episode(MDP<State, Action>&, Policy<State, Action>*);

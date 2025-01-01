@@ -4,14 +4,17 @@
 #include <unordered_map>
 
 #include "./m_utils.h"
+#include "Policy.h"
 
 template <typename State, typename Action>
-class DeterministicPolicy {
+class DeterministicPolicy : public Policy<State, Action> {
    protected:
     std::unordered_map<State, Action, StateHash<State>> m_policy_map;
 
    public:
-    Action operator()(const State& state) const {
+    void set(const State& state, const Action& action) override { m_policy_map[state] = action; }
+
+    Action sample(const State& state) const override {
         auto it = m_policy_map.find(state);
         if (it == m_policy_map.end()) {
             throw std::runtime_error("Error: Invalid state provided for the pi policy function.");
@@ -19,20 +22,14 @@ class DeterministicPolicy {
         return it->second;
     }
 
-    Action& operator[](const State& state) { return m_policy_map[state]; }
-
-    Action sample(const State& state) { return m_policy_map[state]; }
-
-    void set(const State& state, const Action& action) { m_policy_map[state] = action; }
-
-    const std::unordered_map<State, Action, StateHash<State>>& map_container() const { return m_policy_map; }
-
-    void initialize_with_first_action(const MDP<State, Action>& mdp) {
-        for (const auto& state : mdp.S()) {
-            for (const auto& act : mdp.A(state)) {
-                m_policy_map[state] = act;
-                break;
+    void initialize(const std::vector<State>& states,
+                    const std::unordered_map<State, std::vector<Action>, StateHash<State>>& actions) override {
+        for (const auto& state : states) {
+            if (!actions.at(state).empty()) {
+                m_policy_map[state] = actions.at(state)[0];
             }
         }
     }
+
+    const std::unordered_map<State, Action, StateHash<State>>& get_container() const { return m_policy_map; }
 };

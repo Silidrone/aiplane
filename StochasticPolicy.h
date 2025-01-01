@@ -1,105 +1,68 @@
 #pragma once
 
 #include <map>
+#include <numeric>
 #include <random>
 #include <stdexcept>
-#include <utility>
+#include <unordered_map>
 #include <vector>
 
-#include "./m_utils.h"
-#include "MDP.h"
+#include "Policy.h"
+#include "m_utils.h"
 
 template <typename State, typename Action>
-class StochasticPolicy {
+class StochasticPolicy : public Policy<State, Action> {
    protected:
-    std::map<std::pair<State, Action>, double, StateActionPairHash<State, Action>> m_policy_map;
-    int m_actions_count;
+    std::unordered_map<State, std::map<Action, double>, StateHash<State>> m_policy_map;
 
    public:
-    double operator()(const State& state, const Action& action) const {
-        auto it = m_policy_map.find({state, action});
-        if (it == m_policy_map.end()) {
-            throw std::runtime_error("Error: Invalid state-action pair provided for the policy.");
+    StochasticPolicy() {}
+    virtual ~StochasticPolicy() = default;
+
+    virtual void initialize(const std::vector<State>& states,
+                            const std::unordered_map<State, std::vector<Action>, StateHash<State>>& actions) override {
+        for (const State& s : states) {
+            const auto& available_actions = actions.at(s);
+            if (!available_actions.empty()) {
+                double uniform_probability = 1.0 / available_actions.size();
+                for (const Action& a : available_actions) {
+                    m_policy_map[s][a] = uniform_probability;
+                }
+            }
         }
-        return it->second;
     }
 
-    std::vector<std::pair<Action, double>> operator()(const State& state) const {
-        std::vector<std::pair<Action, double>> action_probabilities;
+    virtual Action sample(const State& state) const override {
+        if (m_policy_map.find(state) == m_policy_map.end()) {
+            throw std::runtime_error("Error: State not found in policy");
+        }
 
-        for (const auto& [key, probability] : m_policy_map) {
-            const auto& [s, action] = key;
-            if (s == state) {
-                action_probabilities.emplace_back(action, probability);
+        const auto& action_probs = m_policy_map.at(state);
+        double cumulative_probability = 0.0;
+        double random = random_value(0.0, 1.0);  // Generate a random value in [0, 1]
+
+        for (const auto& [action, probability] : action_probs) {
+            cumulative_probability += probability;
+            if (random <= cumulative_probability) {
+                return action;
             }
         }
 
-        return action_probabilities;
+        throw std::runtime_error("Error: Failed to sample action (probabilities may not sum to 1)");
     }
 
-    void set(const State& state, const Action& action, double probability) {
-        m_policy_map[{state, action}] = probability;
-    }
-
-    void normalize(const State& state) {
-        double total_probability = 0.0;
-
-        for (const auto& [key, probability] : m_policy_map) {
-            const auto& [s, action] = key;
-            if (s == state) {
-                total_probability += probability;
-            }
-        }
+    virtual void normalize(const State& state) {
+        auto& action_probs = m_policy_map[state];
+        double total_probability =
+            std::accumulate(action_probs.begin(), action_probs.end(), 0.0,
+                            [](double sum, const std::pair<Action, double>& ap) { return sum + ap.second; });
 
         if (total_probability > 0) {
-            for (auto& [key, probability] : m_policy_map) {
-                const auto& [s, action] = key;
-                if (s == state) {
-                    probability /= total_probability;
-                }
+            for (auto& [action, probability] : action_probs) {
+                probability /= total_probability;
             }
         }
     }
 
-    Action sample(const State& state) {
-        double cumulative_probability = 0.0;
-        for (const auto& [key, probability] : m_policy_map) {
-            const auto& [s, action] = key;
-            if (s == state) {
-                cumulative_probability += probability;
-                if (random_value(0.0, 1.0) <= cumulative_probability) {
-                    return action;
-                }
-            }
-        }
-
-        throw std::runtime_error("Error: Failed to sample action");
-    }
-
-    void initialize_zero(const std::vector<State>& states,
-                         const std::unordered_map<State, std::vector<Action>>& actions) {
-        for (const auto& state : states) {
-            for (const auto& action : actions.at(state)) {
-                m_policy_map[{state, action}] = 0.0;
-            }
-        }
-        m_actions_count = actions.size();
-    }
-
-    void initialize_uniform(const std::vector<State>& states,
-                            const std::unordered_map<State, std::vector<Action>>& actions) {
-        for (const State& s : states) {
-            if (!actions.empty()) {
-                double uniform_probability = 1.0 / actions.size();
-                for (const Action& a : actions) {
-                    m_policy_map.set(s, a, uniform_probability);
-                }
-            }
-        }
-    }
-
-    const std::unordered_map<std::pair<State, Action>, double, StateActionPairHash<State, Action>>& map_container()
-        const {
-        return m_policy_map;
-    }
+    const std::map<State, std::map<Action, double>>& get_container_impl() const { return m_policy_map; }
 };

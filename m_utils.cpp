@@ -1,7 +1,7 @@
 #include "m_utils.h"
 
-#include <DeterministicPolicy.h>
 #include <MDP.h>
+#include <Policy.h>
 
 #include <algorithm>
 #include <random>
@@ -52,13 +52,13 @@ double poisson_probability(const int k, const double lambda) {
 
 template <typename State, typename Action>
 std::vector<std::tuple<State, Action, Reward>> generate_episode(MDP<State, Action>& mdp,
-                                                                DeterministicPolicy<State, Action> behavior_policy) {
+                                                                Policy<State, Action>* behavior_policy) {
     std::vector<std::tuple<State, Action, Reward>> episode;
     State state = mdp.reset();
     bool done = false;
 
     while (!done) {
-        Action action = behavior_policy.sample(state);
+        Action action = behavior_policy->sample(state);
         auto [next_state, reward] = mdp.step(state, action);
         episode.emplace_back(state, action, reward);
         state = next_state;
@@ -67,6 +67,6 @@ std::vector<std::tuple<State, Action, Reward>> generate_episode(MDP<State, Actio
 
     return episode;
 }
-
 template std::vector<std::tuple<std::tuple<int, int, bool>, bool, double>> generate_episode(
-    MDP<std::tuple<int, int, bool>, bool>&, DeterministicPolicy<std::tuple<int, int, bool>, bool>);
+
+    MDP<std::tuple<int, int, bool>, bool>&, Policy<std::tuple<int, int, bool>, bool>*);

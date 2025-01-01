@@ -8,7 +8,7 @@ VValuePolicyIteration<State, Action>::VValuePolicyIteration(MDP<State, Action> &
 template <typename State, typename Action>
 void VValuePolicyIteration<State, Action>::initialize() {
     GPI<State, Action>::initialize();
-    this->m_policy.initialize_with_first_action(this->m_mdp);
+    this->m_policy.initialize(this->m_mdp.S(), this->m_mdp.A());
 }
 
 template <typename State, typename Action>
@@ -17,7 +17,7 @@ void VValuePolicyIteration<State, Action>::policy_evaluation() {
     do {
         delta = 0;
         for (State &s : this->m_mdp.S()) {
-            Action a = this->m_policy(s);
+            Action a = this->m_policy.sample(s);
 
             const Return old_value = this->v(s);
             Return new_value = 0;

@@ -33,6 +33,7 @@ class MDP {
     std::vector<State> S() const { return m_S; }
     std::vector<State> ST() const { return m_ST; }
     std::vector<Action> A(const State& s) const { return m_A.at(s); }
+    std::unordered_map<State, std::vector<Action>, StateHash<State>> A() const { return m_A; }
 
     std::vector<Transition> p(const State& s, const Action& a) const { return m_dynamics.at({s, a}); }
     Dynamics dynamics() const { return m_dynamics; }

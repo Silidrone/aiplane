@@ -22,7 +22,7 @@ inline int car_rental_main() {
 
     auto policy = mdp_solver.get_policy();
 
-    serialize_to_json(policy.map_container(), "car-rental-policy.json");
+    serialize_to_json(policy.get_container(), "car-rental-policy.json");
     serialize_to_json(mdp_solver.get_v(), "car-rental-value-function.json");
     environment.plot_policy(policy);
 

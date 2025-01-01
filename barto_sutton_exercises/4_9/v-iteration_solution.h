@@ -46,7 +46,7 @@ inline int gambler_main() {
 
     auto policy = mdp_solver.get_policy();
 
-    serialize_to_json(policy.map_container(), "gambler-policy.json");
+    serialize_to_json(policy.get_container(), "gambler-policy.json");
     serialize_to_json(mdp_solver.get_v(), "gambler-value-function.json");
     // environment.plot_policy(policy);
     plot_v_f(mdp_solver);

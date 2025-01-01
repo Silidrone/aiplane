@@ -104,9 +104,9 @@ void CarRentalEnvironment::plot_policy(DeterministicPolicy<State, Action>& pi) {
 
     auto [X, Y] = matplot::meshgrid(x, y);
 
-    for (auto& p : pi.map_container()) {
+    for (auto& p : pi.get_container()) {
         auto s = p.first;
-        Z[s[0]][s[1]] = static_cast<double>(pi(s));
+        Z[s[0]][s[1]] = static_cast<double>(pi.sample(s));
     }
 
     auto contour = matplot::contour(X, Y, Z);

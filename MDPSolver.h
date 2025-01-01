@@ -10,6 +10,8 @@ template <typename State, typename Action>
 class MDPSolver {
    protected:
     std::unordered_map<State, Return, StateHash<State>> m_v{};  // State-value v function
+    // TODO: Perhaps change this map to be akin to to Policy's mapping? i.e. have the State as key and the value as
+    // action-return pair, probably will be more efficient.
     std::unordered_map<std::pair<State, Action>, Return, StateActionPairHash<State, Action>>
         m_Q;  // Action-value Q function
 
@@ -51,5 +53,18 @@ class MDPSolver {
                 "function.");
 
         return it->second;
+    }
+
+    std::tuple<Action, Return> Q_best_action(State &s) {
+        Return max_return = std::numeric_limits<Return>::lowest();
+        Action maximizing_action;
+        for (Action a : this->m_mdp.A(s)) {
+            Return candidate_return = this->Q(s, a);
+            if (candidate_return > max_return) {
+                max_return = candidate_return;
+                maximizing_action = a;
+            }
+        }
+        return {maximizing_action, max_return};
     }
 };

@@ -20,7 +20,8 @@ void QValuePolicyIteration<State, Action>::policy_evaluation() {
                     State s_prime = std::get<0>(transition);
                     Reward r = std::get<1>(transition);
                     double probability = std::get<2>(transition);
-                    new_value += probability * (r + this->m_discount_rate * this->Q(s_prime, this->m_policy(s_prime)));
+                    new_value +=
+                        probability * (r + this->m_discount_rate * this->Q(s_prime, this->m_policy.sample(s_prime)));
                 }
 
                 this->m_Q[{s, a}] = new_value;
@@ -34,16 +35,8 @@ template <typename State, typename Action>
 bool QValuePolicyIteration<State, Action>::policy_improvement() {
     bool policy_stable = true;
     for (State &s : this->m_mdp.S()) {
-        const Return old_value = this->Q(s, this->m_policy(s));
-        Return max_return = std::numeric_limits<Return>::lowest();
-        Action maximizing_action;
-        for (Action &a : this->m_mdp.A(s)) {
-            Return candidate_return = this->Q(s, a);
-            if (candidate_return > max_return) {
-                max_return = candidate_return;
-                maximizing_action = a;
-            }
-        }
+        const Return old_value = this->Q(s, this->m_policy.sample(s));
+        auto [maximizing_action, max_return] = this->Q_best_action(s);
 
         this->m_policy.set(s, maximizing_action);
 
