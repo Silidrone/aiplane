@@ -5,9 +5,22 @@
 #include "barto_sutton_exercises/5_1/Blackjack.h"
 #include "m_utils.h"
 
-void Blackjack::initialize() {}
+void Blackjack::initialize() {
+    for (int player_sum = MIN_PLAYER_SUM; player_sum < MAX_SUM; player_sum++) {
+        for (int dealer_card = ACE; dealer_card <= FACE_CARD; dealer_card++) {
+            for (bool usable_ace : {true, false}) {
+                State s = {player_sum, dealer_card, usable_ace};
+                m_S.push_back(s);
 
-int Blackjack::draw_card() { return random_value(1, 10); }
+                for (bool hit : {true, false}) {
+                    m_A[s].push_back(hit);
+                }
+            }
+        }
+    }
+}
+
+int Blackjack::draw_card() { return random_value(ACE, FACE_CARD); }
 
 bool Blackjack::is_terminal(const State& s) { return s == dummy_terminal_state; }
 
@@ -77,9 +90,9 @@ std::pair<State, Reward> Blackjack::step(const State& state, const Action& hit) 
 
         if (player_sum > MAX_SUM) {
             return {dummy_terminal_state, LOSS_REWARD};
-        }
-
-        return {{player_sum, face_up_card, usable_ace}, NO_REWARD};
+        } else if (player_sum < MAX_SUM) {
+            return {{player_sum, face_up_card, usable_ace}, NO_REWARD};
+        }  // else (i.e. player_sum == MAX_SUM), just transition to dealer's turn (fall through)
     }
 
     // Handle the dealer's turn if the player sticks

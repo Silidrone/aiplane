@@ -37,7 +37,7 @@ class MC_FV : public GPI<State, Action> {
           const double number_of_episodes)
         : GPI<State, Action>(mdp_core, discount_rate, number_of_episodes), m_policy(policy){};
 
-    void policy_iteration() override {
+    void mc_main(const std::function<void(const State&, const Action&, Return)>& update_fn) {
         int episode_n = 0;
         do {
             episode_n++;
@@ -45,23 +45,33 @@ class MC_FV : public GPI<State, Action> {
             std::unordered_map<std::pair<State, Action>, bool, StateActionPairHash<State, Action>> visited;
 
             Return G = 0;
-            for (auto step : episode) {
-                auto [s, a, r] = step;
+            for (auto step_it = episode.rbegin(); step_it != episode.rend(); ++step_it) {
+                auto [s, a, r] = *step_it;
                 G = this->m_discount_rate * G + r;
-                auto first_visit = visited.find({s, a}) == visited.end();
+                bool first_visit = visited.find({s, a}) == visited.end();
                 if (first_visit) {
-                    N[{s, a}]++;
-                    auto error = r - this->m_Q[{s, a}];
-                    this->m_Q[{s, a}] += error / N[{s, a}];
-
-                    // added for plots so that we can see the estimated value function, can be removed if inefficent
-                    m_returns[s].push_back(G);
-                    this->m_v[s] = avg_returns(s);
-
-                    // auto [maximizing_action, max_return] = this->Q_best_action(s);
-                    // this->m_policy->set(s, maximizing_action);
+                    visited[{s, a}] = true;
+                    update_fn(s, a, G);
                 }
             }
         } while (episode_n < this->m_policy_threshold);
+    }
+
+    void policy_iteration() override {
+        mc_main([this](const State& s, const Action& a, Return G) {
+            N[{s, a}]++;
+            auto error = G - this->m_Q[{s, a}];
+            this->m_Q[{s, a}] += error / N[{s, a}];
+
+            auto [maximizing_action, max_return] = this->Q_best_action(s);
+            this->m_policy->set(s, maximizing_action);
+        });
+    }
+
+    void value_estimation() {
+        mc_main([this](const State& s, const Action& a, Return G) {
+            m_returns[s].push_back(G);
+            this->m_v[s] = avg_returns(s);
+        });
     }
 };

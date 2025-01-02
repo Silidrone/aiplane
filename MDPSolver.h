@@ -1,5 +1,6 @@
 #pragma once
 
+#include <iostream>
 #include <stdexcept>
 #include <tuple>
 #include <vector>
@@ -10,8 +11,8 @@ template <typename State, typename Action>
 class MDPSolver {
    protected:
     std::unordered_map<State, Return, StateHash<State>> m_v{};  // State-value v function
-    // TODO: Perhaps change this map to be akin to to Policy's mapping? i.e. have the State as key and the value as
-    // action-return pair, probably will be more efficient.
+    // TODO: Perhaps change this map to have the State as key and the value as action-return pair? Think this through as
+    // it has both its pros and cons.
     std::unordered_map<std::pair<State, Action>, Return, StateActionPairHash<State, Action>>
         m_Q;  // Action-value Q function
 
@@ -55,7 +56,7 @@ class MDPSolver {
         return it->second;
     }
 
-    std::tuple<Action, Return> Q_best_action(State &s) {
+    std::tuple<Action, Return> Q_best_action(const State &s) {
         Return max_return = std::numeric_limits<Return>::lowest();
         Action maximizing_action;
         for (Action a : this->m_mdp.A(s)) {

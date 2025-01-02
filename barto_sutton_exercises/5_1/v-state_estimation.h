@@ -14,7 +14,7 @@ static constexpr int N_OF_EPISODES = 100000;
 inline void plot_v_f(MDPSolver<State, Action>& mdp_solver) {
     matplot::vector_2d x, y, z_usable, z_no_usable;
 
-    for (int player_sum = MIN_PLAYER_SUM; player_sum <= MAX_SUM; ++player_sum) {
+    for (int player_sum = MIN_PLAYER_SUM; player_sum < MAX_SUM; ++player_sum) {
         matplot::vector_1d x_row, y_row, z_row_usable, z_row_no_usable;
 
         for (int dealer_face_up = 1; dealer_face_up <= 10; ++dealer_face_up) {
@@ -24,16 +24,8 @@ inline void plot_v_f(MDPSolver<State, Action>& mdp_solver) {
             State state_with_usable = {player_sum, dealer_face_up, true};
             State state_without_usable = {player_sum, dealer_face_up, false};
 
-            try {
-                z_row_usable.push_back(mdp_solver.v(state_with_usable));
-            } catch (std::exception& e) {
-                z_row_usable.push_back(0);
-            }
-            try {
-                z_row_no_usable.push_back(mdp_solver.v(state_without_usable));
-            } catch (std::exception& e) {
-                z_row_no_usable.push_back(0);
-            }
+            z_row_usable.push_back(mdp_solver.v(state_with_usable));
+            z_row_no_usable.push_back(mdp_solver.v(state_without_usable));
         }
 
         x.push_back(x_row);
@@ -67,8 +59,8 @@ inline void plot_v_f(MDPSolver<State, Action>& mdp_solver) {
 }
 
 inline void construct_player_policy(DeterministicPolicy<State, Action>& policy) {
-    for (int player_sum = MIN_PLAYER_SUM; player_sum <= MAX_SUM; ++player_sum) {
-        for (int dealer_face_up = 1; dealer_face_up <= 10; ++dealer_face_up) {
+    for (int player_sum = MIN_PLAYER_SUM; player_sum < MAX_SUM; ++player_sum) {
+        for (int dealer_face_up = ACE; dealer_face_up <= FACE_CARD; ++dealer_face_up) {
             for (bool usable_ace : {false, true}) {
                 State state = {player_sum, dealer_face_up, usable_ace};
 
@@ -90,7 +82,7 @@ inline int blackjack_main() {
     MC_FV<State, Action> mdp_solver(environment, &blackjack_player_policy, DISCOUNT_RATE, N_OF_EPISODES);
     mdp_solver.initialize();
 
-    double time_taken = benchmark([&]() { mdp_solver.policy_iteration(); });
+    double time_taken = benchmark([&]() { mdp_solver.value_estimation(); });
 
     std::cout << "Time taken: " << time_taken << std::endl;
 

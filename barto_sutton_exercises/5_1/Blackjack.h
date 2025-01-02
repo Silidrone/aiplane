@@ -12,6 +12,7 @@ static constexpr Reward WIN_REWARD = 1;
 static constexpr Reward LOSS_REWARD = -1;
 static constexpr Reward NO_REWARD = 0;
 static constexpr int ACE = 1;
+static constexpr int FACE_CARD = 10;
 static constexpr int USABLE_ACE_VALUE_DIFF = 10;
 static constexpr int MAX_SUM = 21;
 static constexpr int MIN_PLAYER_SUM = 12;
