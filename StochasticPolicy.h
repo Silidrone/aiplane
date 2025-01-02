@@ -51,6 +51,26 @@ class StochasticPolicy : public Policy<State, Action> {
         throw std::runtime_error("Error: Failed to sample action (probabilities may not sum to 1)");
     }
 
+    virtual Action optimal_action(const State& state) const override {
+        const auto& action_probs = m_policy_map.at(state);
+
+        if (action_probs.empty()) {
+            throw std::runtime_error("No actions available for the given state in the policy map.");
+        }
+
+        double highest_probability = 0;
+        Action optimal_action;
+
+        for (const auto& [action, probability] : action_probs) {
+            if (probability > highest_probability) {
+                highest_probability = probability;
+                optimal_action = action;
+            }
+        }
+
+        return optimal_action;
+    }
+
     virtual void normalize(const State& state) {
         auto& action_probs = m_policy_map[state];
         double total_probability =
@@ -64,5 +84,7 @@ class StochasticPolicy : public Policy<State, Action> {
         }
     }
 
-    const std::map<State, std::map<Action, double>>& get_container_impl() const { return m_policy_map; }
+    const std::unordered_map<State, std::map<Action, double>, StateHash<State>>& get_container() const {
+        return m_policy_map;
+    }
 };

@@ -14,4 +14,5 @@ class Policy {
     virtual void initialize(const std::vector<State>& states,
                             const std::unordered_map<State, std::vector<Action>, StateHash<State>>& actions) = 0;
     virtual Action sample(const State& state) const = 0;
+    virtual Action optimal_action(const State& state) const = 0;
 };
