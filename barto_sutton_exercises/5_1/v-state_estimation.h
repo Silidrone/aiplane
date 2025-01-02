@@ -11,49 +11,31 @@
 
 static constexpr int N_OF_EPISODES = 100000;
 
-inline void plot_v_f(MDPSolver<State, Action>& mdp_solver) {
-    matplot::vector_2d x, y, z_usable, z_no_usable;
+inline void plot_v_f(MDPSolver<State, Action>& mdp_solver, bool usable_ace_flag) {
+    matplot::vector_2d x, y, z;
 
     for (int player_sum = MIN_PLAYER_SUM; player_sum < MAX_SUM; ++player_sum) {
-        matplot::vector_1d x_row, y_row, z_row_usable, z_row_no_usable;
+        matplot::vector_1d x_row, y_row, z_row;
 
-        for (int dealer_face_up = 1; dealer_face_up <= 10; ++dealer_face_up) {
+        for (int dealer_face_up = ACE; dealer_face_up <= FACE_CARD; ++dealer_face_up) {
             x_row.push_back(player_sum);
             y_row.push_back(dealer_face_up);
 
-            State state_with_usable = {player_sum, dealer_face_up, true};
-            State state_without_usable = {player_sum, dealer_face_up, false};
-
-            z_row_usable.push_back(mdp_solver.v(state_with_usable));
-            z_row_no_usable.push_back(mdp_solver.v(state_without_usable));
+            State state = {player_sum, dealer_face_up, usable_ace_flag};
+            z_row.push_back(mdp_solver.v(state));
         }
 
         x.push_back(x_row);
         y.push_back(y_row);
-        z_usable.push_back(z_row_usable);
-        z_no_usable.push_back(z_row_no_usable);
+        z.push_back(z_row);
     }
 
-    // You have to uncomment either one if you want to see it and comment the other, they can't be shown (to my
-    // knowledge) both at the same time.
-
-    // Plot for usable ace
-    // auto fig1 = matplot::figure();
-    // matplot::surf(x, y, z_usable);
-    // matplot::xlabel("Player's Total Sum");
-    // matplot::ylabel("Dealer's Face-Up Card");
-    // matplot::zlabel("State-Value V(s)");
-    // matplot::title("V-Function with Usable Ace");
-    // matplot::zlim({LOSS_REWARD, WIN_REWARD});
-    // matplot::show();
-
-    // Plot for no usable ace
-    auto fig2 = matplot::figure();
-    matplot::surf(x, y, z_no_usable);
+    auto fig = matplot::figure();
+    matplot::surf(x, y, z);
     matplot::xlabel("Player's Total Sum");
     matplot::ylabel("Dealer's Face-Up Card");
     matplot::zlabel("State-Value V(s)");
-    matplot::title("V-Function without Usable Ace");
+    matplot::title(usable_ace_flag ? "V-Function with Usable Ace" : "V-Function without Usable Ace");
     matplot::zlim({LOSS_REWARD, WIN_REWARD});
     matplot::show();
 }
@@ -87,7 +69,7 @@ inline int blackjack_main() {
     std::cout << "Time taken: " << time_taken << std::endl;
 
     serialize_to_json(mdp_solver.get_v(), "blackjack-value-function-estimation.json");
-    plot_v_f(mdp_solver);
+    plot_v_f(mdp_solver, true);
 
     return 0;
 }
