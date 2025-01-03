@@ -42,15 +42,22 @@ class MC_FV : public GPI<State, Action> {
         do {
             episode_n++;
             auto episode = generate_episode(this->m_mdp, this->m_policy);
-            std::unordered_map<std::pair<State, Action>, bool, StateActionPairHash<State, Action>> visited;
+
+            std::unordered_map<std::pair<State, Action>, int, StateActionPairHash<State, Action>>
+                first_occurence_index_map;
+            for (int i = 0; i < episode.size(); i++) {
+                auto [s, a, r] = episode[i];
+                if (first_occurence_index_map.find({s, a}) == first_occurence_index_map.end()) {
+                    first_occurence_index_map[{s, a}] = i;
+                }
+            }
 
             Return G = 0;
-            for (auto step_it = episode.rbegin(); step_it != episode.rend(); ++step_it) {
-                auto [s, a, r] = *step_it;
+            for (int reverse_i = episode.size() - 1; reverse_i >= 0; --reverse_i) {
+                auto [s, a, r] = episode[reverse_i];
                 G = this->m_discount_rate * G + r;
-                bool first_visit = visited.find({s, a}) == visited.end();
+                auto first_visit = first_occurence_index_map[{s, a}] == reverse_i;
                 if (first_visit) {
-                    visited[{s, a}] = true;
                     update_fn(s, a, G);
                 }
             }
