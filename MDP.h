@@ -17,7 +17,7 @@ class MDP {
 
    protected:
     std::vector<State> m_S;                                                // State space: S
-    std::vector<State> m_ST;                                               // Terminal State space: ST
+    std::vector<State> m_T;                                                // Terminal State space: T
     std::unordered_map<State, std::vector<Action>, StateHash<State>> m_A;  // Action space: A
     Dynamics m_dynamics;                                                   // Dynamics P function (if known)
     State m_current_state;                                                 // Current state of the environment
@@ -30,7 +30,7 @@ class MDP {
     virtual void initialize() = 0;
 
     std::vector<State> S() const { return m_S; }
-    std::vector<State> ST() const { return m_ST; }
+    std::vector<State> T() const { return m_T; }
     std::vector<Action> A(const State& s) const { return m_A.at(s); }
     std::unordered_map<State, std::vector<Action>, StateHash<State>> A() const { return m_A; }
 
@@ -43,5 +43,5 @@ class MDP {
         throw std::logic_error("The step function is not available in this environment.");
     }
 
-    virtual bool is_terminal(const State& state) { return std::find(m_ST.begin(), m_ST.end(), state) != m_ST.end(); }
+    virtual bool is_terminal(const State& state) { return std::find(m_T.begin(), m_T.end(), state) != m_T.end(); }
 };

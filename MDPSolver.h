@@ -30,6 +30,13 @@ class MDPSolver {
                 m_Q[{s, a}] = 0;
             }
         }
+
+        for (const State &s : this->m_mdp.T()) {
+            m_v[s] = 0;
+            for (const Action &a : this->m_mdp.A(s)) {
+                m_Q[{s, a}] = 0;
+            }
+        }
     }
 
     void set_v(State s, Return r) { m_v[s] = r; }

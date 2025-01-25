@@ -7,7 +7,7 @@
 
 #include "DeterministicPolicy.h"
 #include "ESoftPolicy.h"
-#include "MC_FV.h"
+#include "TD.h"
 #include "barto_sutton_exercises/5_1/Blackjack.h"
 
 static constexpr int N_OF_EPISODES = 500000;
@@ -73,7 +73,7 @@ inline int blackjack_main() {
     ESoftPolicy<State, Action> policy(0.15);
     policy.initialize(environment.S(), environment.A());
 
-    MC_FV<State, Action> mdp_solver(environment, &policy, DISCOUNT_RATE, N_OF_EPISODES);
+    TD<State, Action> mdp_solver(environment, &policy, DISCOUNT_RATE, N_OF_EPISODES, 0.1);
     mdp_solver.initialize();
 
     double time_taken = benchmark([&]() { mdp_solver.policy_iteration(); });
