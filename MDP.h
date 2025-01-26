@@ -20,7 +20,6 @@ class MDP {
     std::vector<State> m_T;                                                // Terminal State space: T
     std::unordered_map<State, std::vector<Action>, StateHash<State>> m_A;  // Action space: A
     Dynamics m_dynamics;                                                   // Dynamics P function (if known)
-    State m_current_state;                                                 // Current state of the environment
 
    public:
     virtual ~MDP() = default;

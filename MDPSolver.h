@@ -17,8 +17,10 @@ class MDPSolver {
         m_Q;  // Action-value Q function
 
     MDP<State, Action> &m_mdp;
+    bool m_strict;
 
    public:
+    MDPSolver() : m_strict(false) {}
     virtual ~MDPSolver() = default;
 
     explicit MDPSolver(MDP<State, Action> &mdp) : m_mdp(mdp) {}
@@ -39,6 +41,8 @@ class MDPSolver {
         }
     }
 
+    void set_strict_mode(bool s) { m_strict = s; }
+
     void set_v(State s, Return r) { m_v[s] = r; }
     void set_q(State s, Action a, Return r) { m_Q[{s, a}] = r; }
 
@@ -48,6 +52,8 @@ class MDPSolver {
     Return v(State s) {
         auto it = m_v.find(s);
         if (it == m_v.end()) {
+            if (!m_strict) return 0;
+
             throw std::runtime_error("Error: Invalid state provided for the v-value function.");
         }
         return it->second;
@@ -55,10 +61,13 @@ class MDPSolver {
 
     Return Q(State s, Action a) {
         auto it = m_Q.find({s, a});
-        if (it == m_Q.end())
+        if (it == m_Q.end()) {
+            if (!m_strict) return 0;
+
             throw std::runtime_error(
                 "Error: Invalid state-action pair provided for the Q-value "
                 "function.");
+        }
 
         return it->second;
     }

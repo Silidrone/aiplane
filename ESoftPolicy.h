@@ -21,16 +21,14 @@ class ESoftPolicy : public StochasticPolicy<State, Action> {
     }
 
     void set(const State& state, const Action& best_action) override {
-        if (this->m_policy_map.find(state) == this->m_policy_map.end()) {
-            throw std::runtime_error("State not found in the policy map");
+        auto& action_probs = this->m_policy_map[state];  // Dynamically creates entry if state is not found
+
+        if (action_probs.empty()) {
+            action_probs[best_action] = 1.0;
+            return;
         }
 
-        auto& action_probs = this->m_policy_map[state];
         size_t actions_count = action_probs.size();
-        if (actions_count == 0) {
-            throw std::runtime_error("No actions available for the given state");
-        }
-
         double uniform_probability = m_epsilon / actions_count;
         double best_action_probability = (1.0 - m_epsilon) + uniform_probability;
 

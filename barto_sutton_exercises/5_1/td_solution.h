@@ -41,7 +41,7 @@ inline void plot_v_f(MDPSolver<State, Action>& mdp_solver, bool usable_ace_flag)
     matplot::show();
 }
 
-inline void plot_policy(const MDP<State, Action>& mdp, const Policy<State, Action>& policy, bool usable_ace_flag) {
+inline void plot_policy(const MDP<State, Action>& mdp, Policy<State, Action>& policy, bool usable_ace_flag) {
     std::vector<double> x, y;
     std::vector<double> colors;
 
@@ -86,7 +86,7 @@ inline int blackjack_main() {
     serialize_to_json(policy.get_container(), "blackjack-stochastic-optimal-policy.json");
     serialize_to_json(optimal_policy.get_container(), "blackjack-deterministic-optimal-policy.json");
     // plot_v_f(mdp_solver, true);
-    plot_policy(environment, optimal_policy, false);
+    plot_policy(environment, optimal_policy, true);
 
     return 0;
 }

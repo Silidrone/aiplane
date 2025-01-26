@@ -22,15 +22,17 @@ class DeterministicPolicy : public Policy<State, Action> {
 
     void set(const State& state, const Action& action) override { m_policy_map[state] = action; }
 
-    Action sample(const State& state) const override {
+    Action sample(const State& state) override {
         auto it = m_policy_map.find(state);
         if (it == m_policy_map.end()) {
-            throw std::runtime_error("Error: Invalid state provided for the pi policy function.");
+            Action action = this->fallback_action();
+            this->set(state, action);
+            return action;
         }
         return it->second;
     }
 
-    virtual Action optimal_action(const State& state) const override { return sample(state); }
+    virtual Action optimal_action(const State& state) override { return sample(state); }
 
     void initialize(const std::vector<State>& states,
                     const std::unordered_map<State, std::vector<Action>, StateHash<State>>& actions) override {

@@ -41,7 +41,7 @@ inline void plot_v_f(MDPSolver<State, Action>& mdp_solver, bool usable_ace_flag)
     matplot::show();
 }
 
-inline void plot_policy(const MDP<State, Action>& mdp, const Policy<State, Action>& policy, bool usable_ace_flag) {
+inline void plot_policy(const MDP<State, Action>& mdp, Policy<State, Action>& policy, bool usable_ace_flag) {
     std::vector<double> x, y;
     std::vector<double> colors;
 

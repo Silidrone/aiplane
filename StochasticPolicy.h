@@ -32,9 +32,11 @@ class StochasticPolicy : public Policy<State, Action> {
         }
     }
 
-    virtual Action sample(const State& state) const override {
+    virtual Action sample(const State& state) override {
         if (m_policy_map.find(state) == m_policy_map.end()) {
-            throw std::runtime_error("Error: State not found in policy");
+            Action action = this->fallback_action();
+            this->set(state, action);
+            return action;
         }
 
         const auto& action_probs = m_policy_map.at(state);
@@ -51,11 +53,11 @@ class StochasticPolicy : public Policy<State, Action> {
         throw std::runtime_error("Error: Failed to sample action (probabilities may not sum to 1)");
     }
 
-    virtual Action optimal_action(const State& state) const override {
+    virtual Action optimal_action(const State& state) override {
         const auto& action_probs = m_policy_map.at(state);
 
         if (action_probs.empty()) {
-            throw std::runtime_error("No actions available for the given state in the policy map.");
+            throw std::runtime_error("optimal_action: No actions available for the given state in the policy map.");
         }
 
         double highest_probability = 0;
