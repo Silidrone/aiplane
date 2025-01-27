@@ -33,5 +33,15 @@ inline int taggame_main() {
     serialize_to_json(mdp_solver.get_Q(), "taggame-optimal-Q.json");
     serialize_to_json(policy.get_container(), "taggame-stochastic-optimal-policy.json");
     serialize_to_json(optimal_policy.get_container(), "taggame-deterministic-optimal-policy.json");
+    // auto &communicator = Communicator::getInstance();
+    // communicator.connectToServer("127.0.0.1", 12345);
+    // int i = 0;
+    // while (i < 2) {
+    //     communicator.sendAction(communicator.RESET);
+    //     auto state = communicator.receiveState();
+    //     std::cout << "Received: " << state << std::endl;
+    //     i++;
+    //     sleep(5);
+    // }
     return 0;
 }

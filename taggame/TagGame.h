@@ -22,7 +22,7 @@ static constexpr Reward CATCH_REWARD = 10;
 
 static constexpr int MAX_SPEED = 10;
 static constexpr int MIN_SPEED = 0;
-static constexpr int MAX_ANGLE = -45;
+static constexpr int MAX_ANGLE = 45;
 static constexpr int ANGLE_SENSITIVITY = 15;
 static constexpr int SPEED_SENSITIVITY = 1;
 static constexpr int WINDOW_WIDTH = 800;

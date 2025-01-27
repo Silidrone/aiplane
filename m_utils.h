@@ -2,6 +2,7 @@
 
 #include <chrono>
 #include <cmath>
+#include <eigen3/Eigen/Dense>
 #include <fstream>
 #include <nlohmann/json.hpp>
 #include <sstream>
@@ -40,6 +41,21 @@ struct ExtractInnerType<std::vector<T>> {
     using type = T;
 };
 
+namespace std {
+template <>
+struct hash<std::tuple<int, int>> {
+    size_t operator()(const std::tuple<int, int>& action) const {
+        const auto& [a, b] = action;
+        size_t seed = 0;
+
+        seed ^= std::hash<int>()(a) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+        seed ^= std::hash<int>()(b) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+
+        return seed;
+    }
+};
+}  // namespace std
+
 template <typename State>
 struct StateHash {
     size_t operator()(const State& state) const {
@@ -53,6 +69,22 @@ struct StateHash {
         } else if constexpr (std::is_same_v<State, std::tuple<int, int, bool>>) {
             const auto& [a, b, c] = state;
             return std::hash<int>()(a) ^ (std::hash<int>()(b) << 1) ^ (std::hash<bool>()(c) << 2);
+        } else if constexpr (std::is_same_v<State, std::tuple<Eigen::Vector2d, Eigen::Vector2d, int, bool>>) {
+            const auto& [vec1, vec2, dist, tag_changed] = state;
+            size_t result = 0;
+
+            for (int i = 0; i < vec1.size(); ++i) {
+                result ^= std::hash<double>()(vec1(i)) + 0x9e3779b9 + (result << 6) + (result >> 2);
+            }
+
+            for (int i = 0; i < vec2.size(); ++i) {
+                result ^= std::hash<double>()(vec2(i)) + 0x9e3779b9 + (result << 6) + (result >> 2);
+            }
+
+            result ^= std::hash<int>()(dist) + 0x9e3779b9 + (result << 6) + (result >> 2);
+            result ^= std::hash<bool>()(tag_changed) + 0x9e3779b9 + (result << 6) + (result >> 2);
+
+            return result;
         } else {
             return std::hash<State>()(state);
         }
@@ -92,6 +124,19 @@ inline std::string key_to_string<std::pair<std::tuple<int, int, bool>, bool>>(
     const auto& [a, b, c] = state;
     return "(" + std::to_string(a) + ", " + std::to_string(b) + ", " + (c ? "true" : "false") + ")," +
            (action ? "hit" : "stick");
+}
+
+template <>
+inline std::string key_to_string<std::tuple<Eigen::Vector2d, Eigen::Vector2d, int, bool>>(
+    const std::tuple<Eigen::Vector2d, Eigen::Vector2d, int, bool>& key) {
+    const auto& [vec1, vec2, dist, flag] = key;
+
+    auto vec_to_string = [](const Eigen::Vector2d& vec) {
+        return "(" + std::to_string(static_cast<int>(vec.x())) + ", " + std::to_string(static_cast<int>(vec.y())) + ")";
+    };
+
+    return "{" + vec_to_string(vec1) + ", " + vec_to_string(vec2) + ", " + std::to_string(dist) + ", " +
+           (flag ? "true" : "false") + "}";
 }
 
 template <typename State, typename Action>
@@ -144,6 +189,34 @@ void serialize_to_json(const std::unordered_map<std::pair<std::tuple<int, int, b
     if (!file.is_open()) {
         throw std::runtime_error("Failed to open file for writing JSON.");
     }
+    file << j.dump(4);
+    file.close();
+}
+
+template <typename Value, typename Hash>
+void serialize_to_json(
+    const std::unordered_map<std::pair<std::tuple<Eigen::Vector2d, Eigen::Vector2d, int, bool>, std::tuple<int, int>>,
+                             Value, Hash>& map,
+    const std::string& filename) {
+    nlohmann::json j;
+    for (const auto& [key, value] : map) {
+        const auto& [state, action] = key;
+        const auto& [vec1, vec2, integer, boolean] = state;
+        const auto& [action_rotation, action_speed] = action;
+
+        std::string key_string = "([" + std::to_string(vec1.x()) + ", " + std::to_string(vec1.y()) + "], " + "[" +
+                                 std::to_string(vec2.x()) + ", " + std::to_string(vec2.y()) + "], " +
+                                 std::to_string(integer) + ", " + (boolean ? "true" : "false") + "), " + "Action(" +
+                                 std::to_string(action_rotation) + ", " + std::to_string(action_speed) + ")";
+
+        j[key_string] = value;
+    }
+
+    std::ofstream file(filename);
+    if (!file.is_open()) {
+        throw std::runtime_error("Failed to open file for writing JSON.");
+    }
+
     file << j.dump(4);
     file.close();
 }

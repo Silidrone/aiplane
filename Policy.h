@@ -13,6 +13,8 @@ class Policy {
     std::vector<Action> m_actions;
 
    public:
+    Policy() = default;
+    Policy(const Policy &other) : m_actions(other.m_actions) {}
     virtual ~Policy() = default;
 
     virtual void set(const State &, const Action &) = 0;

@@ -27,16 +27,16 @@ class TD : public GPI<State, Action> {
             do {  // step loop
                 auto [s_prime, r] = this->m_mdp.step(s, a);
                 if (this->m_mdp.is_terminal(s_prime)) {
-                    this->m_Q[{s, a}] += this->step_size * (r - this->Q(s, a));
+                    // this->m_Q[{s, a}] += this->step_size * (r - this->Q(s, a));
                 } else {
                     Action a_prime = this->m_policy->sample(s_prime);
-                    this->m_Q[{s, a}] +=
-                        this->step_size * (r + this->m_discount_rate * this->Q(s_prime, a_prime) - this->Q(s, a));
+                    // this->m_Q[{s, a}] +=
+                    //     this->step_size * (r + this->m_discount_rate * this->Q(s_prime, a_prime) - this->Q(s, a));
                     a = a_prime;
                 }
 
-                auto [maximizing_action, max_return] = this->Q_best_action(s);
-                this->m_policy->set(s, maximizing_action);
+                // auto [maximizing_action, max_return] = this->Q_best_action(s);
+                // this->m_policy->set(s, maximizing_action);
                 s = s_prime;
             } while (!this->m_mdp.is_terminal(s));
         } while (i < this->m_policy_threshold);

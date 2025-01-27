@@ -31,6 +31,8 @@ set(CORE_HEADERS
     ${CMAKE_SOURCE_DIR}/ESoftPolicy.h
     ${CMAKE_SOURCE_DIR}/MC_FV.h
     ${CMAKE_SOURCE_DIR}/ValueIteration.h
+    ${CMAKE_SOURCE_DIR}/taggame/TagGame.h
+    ${CMAKE_SOURCE_DIR}/taggame/Communicator.h
 )
 
 set(CORE_SOURCES
@@ -38,6 +40,7 @@ set(CORE_SOURCES
     ${CMAKE_SOURCE_DIR}/VValuePolicyIteration.cpp
     ${CMAKE_SOURCE_DIR}/m_utils.cpp
     ${CMAKE_SOURCE_DIR}/ValueIteration.cpp
+    ${CMAKE_SOURCE_DIR}/taggame/TagGame.cpp
     ${CMAKE_SOURCE_DIR}/main.cpp
 )
 

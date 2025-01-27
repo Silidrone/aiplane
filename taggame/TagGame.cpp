@@ -10,7 +10,9 @@
 
 void TagGame::initialize() {
     if (!m_communicator.connectToServer(TAGGAME_HOST, TAGGAME_PORT)) {
-        throw std::runtime_error("Failed to initialize: Failed to connect to the TagGame!");
+        throw std::runtime_error(
+            "Failed to initialize: Failed to connect to the TagGame! Please run the TagGame first and then the RL "
+            "control.");
     }
 
     for (int rotation = -MAX_ANGLE; rotation <= MAX_ANGLE; rotation += ANGLE_SENSITIVITY) {
@@ -20,7 +22,7 @@ void TagGame::initialize() {
     }
 }
 
-bool TagGame::is_terminal(const State& s) { return std::get<2>(s) == 0; }
+bool TagGame::is_terminal(const State& s) { return std::get<3>(s); }
 
 State TagGame::deserialize_state(const std::string& str_state) {
     try {

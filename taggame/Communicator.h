@@ -60,7 +60,8 @@ class Communicator {
     }
 
     void sendAction(const std::string& action) {
-        ssize_t bytesSent = send(sock, action.c_str(), action.size(), 0);
+        std::string actionWithNewline = action + "\n";  // Add newline for Java `readLine`
+        ssize_t bytesSent = send(sock, actionWithNewline.c_str(), actionWithNewline.size(), 0);
         if (bytesSent < 0) {
             std::cerr << "Error sending action." << std::endl;
         } else {
