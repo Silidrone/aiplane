@@ -3,6 +3,8 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
+#include <cerrno>
+#include <csignal>
 #include <iostream>
 #include <string>
 
@@ -53,8 +55,10 @@ class Communicator {
             return std::string(buffer);
         } else if (bytesReceived == 0) {
             std::cerr << "Server closed the connection." << std::endl;
+            throw std::runtime_error("Server closed the connection.");
         } else {
             std::cerr << "Error receiving state." << std::endl;
+            throw std::runtime_error("Error receiving state.");
         }
         return "";
     }
@@ -62,15 +66,19 @@ class Communicator {
     void sendAction(const std::string& action) {
         std::string actionWithNewline = action + "\n";  // Add newline for Java `readLine`
         ssize_t bytesSent = send(sock, actionWithNewline.c_str(), actionWithNewline.size(), 0);
+        // std::cout << "Sending " << action << std::endl;
         if (bytesSent < 0) {
             std::cerr << "Error sending action." << std::endl;
+            throw std::runtime_error("Error sending action.");
         }
     }
 
    private:
     int sock = -1;
 
-    Communicator() = default;
+    Communicator() {
+        signal(SIGPIPE, SIG_IGN);  // Ignore SIGPIPE globally
+    }
     Communicator(const Communicator&) = delete;
     Communicator& operator=(const Communicator&) = delete;
     ~Communicator() { disconnect(); }

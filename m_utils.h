@@ -2,7 +2,6 @@
 
 #include <chrono>
 #include <cmath>
-#include <eigen3/Eigen/Dense>
 #include <fstream>
 #include <nlohmann/json.hpp>
 #include <sstream>
@@ -69,17 +68,15 @@ struct StateHash {
         } else if constexpr (std::is_same_v<State, std::tuple<int, int, bool>>) {
             const auto& [a, b, c] = state;
             return std::hash<int>()(a) ^ (std::hash<int>()(b) << 1) ^ (std::hash<bool>()(c) << 2);
-        } else if constexpr (std::is_same_v<State, std::tuple<Eigen::Vector2d, Eigen::Vector2d, int>>) {
+        } else if constexpr (std::is_same_v<State, std::tuple<std::pair<int, int>, std::pair<int, int>, int>>) {
             const auto& [vec1, vec2, d] = state;
             size_t result = 0;
 
-            for (int i = 0; i < vec1.size(); ++i) {
-                result ^= std::hash<double>()(vec1(i)) + 0x9e3779b9 + (result << 6) + (result >> 2);
-            }
+            result ^= std::hash<int>()(vec1.first) + 0x9e3779b9 + (result << 6) + (result >> 2);
+            result ^= std::hash<int>()(vec1.second) + 0x9e3779b9 + (result << 6) + (result >> 2);
 
-            for (int i = 0; i < vec2.size(); ++i) {
-                result ^= std::hash<double>()(vec2(i)) + 0x9e3779b9 + (result << 6) + (result >> 2);
-            }
+            result ^= std::hash<int>()(vec2.first) + 0x9e3779b9 + (result << 6) + (result >> 2);
+            result ^= std::hash<int>()(vec2.second) + 0x9e3779b9 + (result << 6) + (result >> 2);
 
             result ^= std::hash<int>()(d) + 0x9e3779b9 + (result << 6) + (result >> 2);
 
@@ -126,12 +123,13 @@ inline std::string key_to_string<std::pair<std::tuple<int, int, bool>, bool>>(
 }
 
 template <>
-inline std::string key_to_string<std::tuple<Eigen::Vector2d, Eigen::Vector2d, int>>(
-    const std::tuple<Eigen::Vector2d, Eigen::Vector2d, int>& key) {
+inline std::string key_to_string<std::tuple<std::pair<int, int>, std::pair<int, int>, int>>(
+    const std::tuple<std::pair<int, int>, std::pair<int, int>, int>& key) {
     const auto& [vec1, vec2, dist] = key;
 
-    auto vec_to_string = [](const Eigen::Vector2d& vec) {
-        return "(" + std::to_string(static_cast<int>(vec.x())) + ", " + std::to_string(static_cast<int>(vec.y())) + ")";
+    auto vec_to_string = [](const std::pair<int, int>& vec) {
+        return "(" + std::to_string(static_cast<int>(vec.first)) + ", " + std::to_string(static_cast<int>(vec.second)) +
+               ")";
     };
 
     return "{" + vec_to_string(vec1) + ", " + vec_to_string(vec2) + ", " + std::to_string(dist) + "}";
@@ -193,8 +191,8 @@ void serialize_to_json(const std::unordered_map<std::pair<std::tuple<int, int, b
 
 template <typename Value, typename Hash>
 void serialize_to_json(
-    const std::unordered_map<std::pair<std::tuple<Eigen::Vector2d, Eigen::Vector2d, int>, std::tuple<int, int>>, Value,
-                             Hash>& map,
+    const std::unordered_map<std::pair<std::tuple<std::pair<int, int>, std::pair<int, int>, int>, std::tuple<int, int>>,
+                             Value, Hash>& map,
     const std::string& filename) {
     nlohmann::json j;
     for (const auto& [key, value] : map) {
@@ -202,8 +200,8 @@ void serialize_to_json(
         const auto& [vec1, vec2, integer] = state;
         const auto& [action_x, action_y] = action;
 
-        std::string key_string = "([" + std::to_string(vec1.x()) + ", " + std::to_string(vec1.y()) + "], " + "[" +
-                                 std::to_string(vec2.x()) + ", " + std::to_string(vec2.y()) + "], " +
+        std::string key_string = "([" + std::to_string(vec1.first) + ", " + std::to_string(vec1.second) + "], " + "[" +
+                                 std::to_string(vec2.first) + ", " + std::to_string(vec2.second) + "], " +
                                  std::to_string(integer) + "), " + "Action(" + std::to_string(action_x) + ", " +
                                  std::to_string(action_y) + ")";
 

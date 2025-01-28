@@ -17,7 +17,7 @@ void TagGame::initialize() {
 
     for (int vx = -MAX_VELOCITY; vx <= MAX_VELOCITY; ++vx) {
         for (int vy = -MAX_VELOCITY; vy <= MAX_VELOCITY; ++vy) {
-            if (vx * vx + vy * vy <= MAX_VELOCITY * MAX_VELOCITY) {
+            if (vx * vx + vy * vy == MAX_VELOCITY * MAX_VELOCITY) {
                 m_all_actions.emplace_back(std::make_tuple(vx, vy));
             }
         }
@@ -28,21 +28,21 @@ State TagGame::deserialize_state(const std::string& str_state) {
     try {
         nlohmann::json gameState = nlohmann::json::parse(str_state);
 
-        Eigen::Vector2d myVelocity(gameState["mv"][0], gameState["mv"][1]);
-        Eigen::Vector2d taggedVelocity(gameState["tv"][0], gameState["tv"][1]);
+        std::pair<int, int> myVelocity(gameState["mv"][0], gameState["mv"][1]);
+        std::pair<int, int> taggedVelocity(gameState["tv"][0], gameState["tv"][1]);
         int distance = gameState["d"];
 
-        std::cout << "-----------Parsed Data---------------" << std::endl;
-        std::cout << "My Velocity: [" << myVelocity.transpose() << "]" << std::endl;
-        std::cout << "Tagged Velocity: [" << taggedVelocity.transpose() << "]" << std::endl;
-        std::cout << "Distance: [" << distance << "]" << std::endl;
-        std::cout << "-------------------------------------" << std::endl;
+        // std::cout << "Received: ([" << myVelocity.first << ", " << myVelocity.second << "], [" <<
+        // taggedVelocity.first
+        //           << ", " << taggedVelocity.second << "], " << distance << std::endl;
 
         return {myVelocity, taggedVelocity, distance};
     } catch (const std::exception& e) {
         std::cerr << "Error parsing JSON: " << e.what() << std::endl;
     }
 }
+
+bool TagGame::is_terminal(const State& s) { return std::get<2>(s) == 0; }
 
 std::string TagGame::serialize_action(Action a) {
     nlohmann::json serialized_action;
@@ -60,15 +60,27 @@ Reward TagGame::calculate_reward(const State& old_s, const State& new_s) {
     auto [old_tagged_velocity, old_my_velocity, old_distance] = old_s;
     auto [new_tagged_velocity, new_my_velocity, new_distance] = new_s;
 
-    if (old_distance != 0) {
-        if (new_distance == 0) {
-            return GET_CAUGHT_REWARD;
-        } else {
-            return STAY_UNTAGGED_REWARD;
-        }
+    // if (old_distance != 0 && new_distance == 0) {
+    //     return GET_CAUGHT_REWARD;
+    // }
+    // else if (new_distance != 0) {
+    //     Reward r = 0;
+    //     if (new_distance > DISTANCE_THRESHOLD) {
+    //         r += STAY_FURTHER_REWARD;
+    //     } else {
+    //         r += STAY_CLOSER_REWARD;
+    //     }
+
+    //     return r;
+    // }
+
+    Reward r = (new_distance - old_distance) * 1;
+
+    if (new_distance < DISTANCE_THRESHOLD) {
+        r += STAY_CLOSER_REWARD;
     }
 
-    return 0;
+    return r;
 }
 
 State TagGame::reset() {

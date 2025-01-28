@@ -10,9 +10,9 @@
 #include "TD.h"
 #include "taggame/TagGame.h"
 
-static constexpr long double N_OF_STEPS = 1000000000000000000;
-static constexpr double POLICY_EPSILON = 0.10f;
-static constexpr double TD_ALPHA = 0.1f;
+static constexpr long double N_OF_STEPS = 10000;
+static constexpr double POLICY_EPSILON = 0.1f;
+static constexpr double TD_ALPHA = 0.2f;
 
 inline int taggame_main() {
     TagGame environment;
@@ -24,7 +24,11 @@ inline int taggame_main() {
     TD<State, Action> mdp_solver(environment, &policy, DISCOUNT_RATE, N_OF_STEPS, TD_ALPHA);
     mdp_solver.initialize();
 
-    mdp_solver.policy_iteration();
+    try {
+        mdp_solver.policy_iteration();
+    } catch (...) {
+        std::cerr << "An exception occurred during policy iteration. Ignoring and proceeding." << std::endl;
+    }
 
     DeterministicPolicy<State, Action> optimal_policy(policy);
 
