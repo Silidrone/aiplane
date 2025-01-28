@@ -2,7 +2,7 @@
 
 template <typename State, typename Action>
 VValuePolicyIteration<State, Action>::VValuePolicyIteration(MDP<State, Action> &mdp_core, const double discount_rate,
-                                                            const double policy_threshold)
+                                                            const long double policy_threshold)
     : GPI<State, Action>(mdp_core, discount_rate, policy_threshold) {}
 
 template <typename State, typename Action>

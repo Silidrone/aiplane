@@ -9,7 +9,7 @@
 #include "m_utils.h"
 
 static constexpr double DISCOUNT_RATE = 1;  // no discounting
-static constexpr double POLICY_THRESHOLD_EPSILON = 0.001;
+static constexpr long double POLICY_THRESHOLD_EPSILON = 0.001;
 
 inline void plot_v_f(MDPSolver<State, Action> mdp_solver) {
     matplot::vector_1d x, y;

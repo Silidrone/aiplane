@@ -8,7 +8,7 @@
 #include "barto_sutton_exercises/4_7/CarRentalEnvironment.h"
 
 static constexpr double DISCOUNT_RATE = 0.9f;
-static constexpr double POLICY_THRESHOLD_EPSILON = 0.1;
+static constexpr long double POLICY_THRESHOLD_EPSILON = 0.1;
 
 inline int car_rental_main() {
     CarRentalEnvironment environment;

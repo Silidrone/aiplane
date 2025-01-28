@@ -202,17 +202,17 @@ void serialize_to_json(
     for (const auto& [key, value] : map) {
         const auto& [state, action] = key;
         const auto& [vec1, vec2, integer, boolean] = state;
-        const auto& [action_rotation, action_speed] = action;
+        const auto& [action_x, action_y] = action;
 
         std::string key_string = "([" + std::to_string(vec1.x()) + ", " + std::to_string(vec1.y()) + "], " + "[" +
                                  std::to_string(vec2.x()) + ", " + std::to_string(vec2.y()) + "], " +
                                  std::to_string(integer) + ", " + (boolean ? "true" : "false") + "), " + "Action(" +
-                                 std::to_string(action_rotation) + ", " + std::to_string(action_speed) + ")";
+                                 std::to_string(action_x) + ", " + std::to_string(action_y) + ")";
 
         j[key_string] = value;
     }
 
-    std::ofstream file(filename);
+    std::ofstream file(output_dir + filename);
     if (!file.is_open()) {
         throw std::runtime_error("Failed to open file for writing JSON.");
     }

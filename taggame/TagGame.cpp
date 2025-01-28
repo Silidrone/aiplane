@@ -15,9 +15,11 @@ void TagGame::initialize() {
             "control.");
     }
 
-    for (int rotation = -MAX_ANGLE; rotation <= MAX_ANGLE; rotation += ANGLE_SENSITIVITY) {
-        for (int speed = MIN_SPEED; speed <= MAX_SPEED; speed += SPEED_SENSITIVITY) {
-            m_all_actions.emplace_back(std::make_tuple(rotation, speed));
+    for (int vx = -MAX_VELOCITY; vx <= MAX_VELOCITY; ++vx) {
+        for (int vy = -MAX_VELOCITY; vy <= MAX_VELOCITY; ++vy) {
+            if (vx * vx + vy * vy <= MAX_VELOCITY * MAX_VELOCITY) {
+                m_all_actions.emplace_back(std::make_tuple(vx, vy));
+            }
         }
     }
 }
@@ -33,11 +35,12 @@ State TagGame::deserialize_state(const std::string& str_state) {
         int distance = gameState["d"];
         bool tag_changed = gameState["tc"];
 
-        std::cout << "Parsed Data:" << std::endl;
+        std::cout << "-----------Parsed Data---------------" << std::endl;
         std::cout << "My Velocity: [" << myVelocity.transpose() << "]" << std::endl;
         std::cout << "Tagged Velocity: [" << taggedVelocity.transpose() << "]" << std::endl;
         std::cout << "Distance: [" << distance << "]" << std::endl;
         std::cout << "Tag changed: " << (tag_changed ? "true" : "false") << std::endl;
+        std::cout << "-------------------------------------" << std::endl;
 
         return {myVelocity, taggedVelocity, distance, tag_changed};
     } catch (const std::exception& e) {
@@ -48,11 +51,11 @@ State TagGame::deserialize_state(const std::string& str_state) {
 std::string TagGame::serialize_action(Action a) {
     nlohmann::json serialized_action;
 
-    int angle_diff = std::get<0>(a);
-    int speed = std::get<1>(a);
+    int x = std::get<0>(a);
+    int y = std::get<1>(a);
 
-    serialized_action["a"] = angle_diff;
-    serialized_action["s"] = speed;
+    serialized_action["x"] = x;
+    serialized_action["y"] = y;
 
     return serialized_action.dump();
 }

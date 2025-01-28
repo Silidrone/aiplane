@@ -20,11 +20,14 @@ class MDP {
     std::vector<State> m_T;                                                // Terminal State space: T
     std::unordered_map<State, std::vector<Action>, StateHash<State>> m_A;  // Action space: A
     Dynamics m_dynamics;                                                   // Dynamics P function (if known)
+    bool m_is_continuous;
 
    public:
     virtual ~MDP() = default;
 
-    MDP() {}
+    MDP(bool is_continuous = false) : m_is_continuous(is_continuous) {}
+
+    bool is_continuous() { return m_is_continuous; }
 
     virtual void initialize() = 0;
 
@@ -42,5 +45,9 @@ class MDP {
         throw std::logic_error("The step function is not available in this environment.");
     }
 
-    virtual bool is_terminal(const State& state) { return std::find(m_T.begin(), m_T.end(), state) != m_T.end(); }
+    virtual bool is_terminal(const State& state) {
+        if (m_is_continuous) return false;
+
+        return std::find(m_T.begin(), m_T.end(), state) != m_T.end();
+    }
 };

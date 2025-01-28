@@ -10,7 +10,7 @@ class ValueIteration : public GPI<State, Action> {
     DeterministicPolicy<State, Action> m_policy;
 
    public:
-    ValueIteration(MDP<State, Action>&, const double, const double);
+    ValueIteration(MDP<State, Action>&, const double, const long double);
 
     void policy_iteration() override;
     DeterministicPolicy<State, Action> get_policy() const { return m_policy; }

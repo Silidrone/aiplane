@@ -20,21 +20,16 @@ static constexpr Reward STAY_UNTAGGED_REWARD = 5;
 static constexpr Reward CAUGHT_REWARD = -10;
 static constexpr Reward CATCH_REWARD = 10;
 
-static constexpr int MAX_SPEED = 10;
-static constexpr int MIN_SPEED = 0;
-static constexpr int MAX_ANGLE = 45;
-static constexpr int ANGLE_SENSITIVITY = 15;
-static constexpr int SPEED_SENSITIVITY = 1;
+static constexpr int MAX_VELOCITY = 30;
 static constexpr int WINDOW_WIDTH = 800;
 static constexpr int WINDOW_HEIGHT = 600;
 static constexpr int DISTANCE_THRESHOLD = 100;
 static const std::string TAGGAME_HOST = "127.0.0.1";
 static const int TAGGAME_PORT = 12345;
 
-// (taggedVelocity, myVelocity, distance, tagChanged) all vectors can only take whole numbers, and magnitude can be at
-// maximum between MIN_SPEED and MAX_SPEED
+// (taggedVelocity, myVelocity, distance, tagChanged)
 using State = std::tuple<Eigen::Vector2d, Eigen::Vector2d, int, bool>;
-// rotation: between -45 and 45 (can move by 15, so 6 values) and speed: between 0 and 10
+// the x and y components of the velocity vector
 using Action = std::tuple<int, int>;
 
 class TagGame : public MDP<State, Action> {
@@ -43,7 +38,7 @@ class TagGame : public MDP<State, Action> {
     std::vector<Action> m_all_actions;
 
    public:
-    TagGame() : m_communicator(Communicator::getInstance()) {}
+    TagGame() : MDP(true), m_communicator(Communicator::getInstance()) {}
     virtual ~TagGame() { Communicator::getInstance().disconnect(); };
     void initialize() override;
     bool is_terminal(const State &s) override;

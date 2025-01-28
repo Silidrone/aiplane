@@ -13,6 +13,6 @@ class QValuePolicyIteration : public GPI<State, Action> {
     DeterministicPolicy<State, Action> m_policy;
 
    public:
-    explicit QValuePolicyIteration(MDP<State, Action>&, const double, const double);
+    explicit QValuePolicyIteration(MDP<State, Action>&, const double, const long double);
     DeterministicPolicy<State, Action> get_policy() const { return m_policy; }
 };

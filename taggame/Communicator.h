@@ -64,8 +64,6 @@ class Communicator {
         ssize_t bytesSent = send(sock, actionWithNewline.c_str(), actionWithNewline.size(), 0);
         if (bytesSent < 0) {
             std::cerr << "Error sending action." << std::endl;
-        } else {
-            std::cout << "Action sent: " << action << std::endl;
         }
     }
 

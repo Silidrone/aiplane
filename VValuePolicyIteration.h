@@ -13,6 +13,6 @@ class VValuePolicyIteration : public GPI<State, Action> {
     void initialize() override;
 
    public:
-    explicit VValuePolicyIteration(MDP<State, Action>&, const double, const double);
+    explicit VValuePolicyIteration(MDP<State, Action>&, const double, const long double);
     DeterministicPolicy<State, Action> get_policy() const { return m_policy; }
 };

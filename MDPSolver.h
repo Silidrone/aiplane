@@ -73,15 +73,36 @@ class MDPSolver {
     }
 
     std::tuple<Action, Return> Q_best_action(const State &s) {
+        try {
+            Return max_return = std::numeric_limits<Return>::lowest();
+            Action maximizing_action;
+            for (Action a : this->m_mdp.A(s)) {
+                Return candidate_return = this->Q(s, a);
+                if (candidate_return > max_return) {
+                    max_return = candidate_return;
+                    maximizing_action = a;
+                }
+            }
+            return {maximizing_action, max_return};
+        } catch (const std::out_of_range &) {
+            return Q_best_action_fallback(s);
+        }
+    }
+
+    // This is the fallback used when the A(s) state-action space is not pre-initialized.
+    std::tuple<Action, Return> Q_best_action_fallback(const State &s) {
         Return max_return = std::numeric_limits<Return>::lowest();
         Action maximizing_action;
-        for (Action a : this->m_mdp.A(s)) {
-            Return candidate_return = this->Q(s, a);
-            if (candidate_return > max_return) {
-                max_return = candidate_return;
-                maximizing_action = a;
+
+        for (const auto &[state_action, value] : this->m_Q) {
+            if (state_action.first == s) {
+                if (value > max_return) {
+                    max_return = value;
+                    maximizing_action = state_action.second;
+                }
             }
         }
+
         return {maximizing_action, max_return};
     }
 };
