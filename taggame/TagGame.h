@@ -11,24 +11,15 @@
 
 static constexpr double DISCOUNT_RATE = 1;  // no discounting
 
-static constexpr Reward GET_CLOSER_REWARD = -1;
-static constexpr Reward GET_FURTHER_REWARD = 1;
+static constexpr Reward STAY_UNTAGGED_REWARD = 1;
+static constexpr Reward GET_CAUGHT_REWARD = -600;
 
-static constexpr Reward STAY_TAGGED_REWARD = -5;
-static constexpr Reward STAY_UNTAGGED_REWARD = 5;
-
-static constexpr Reward CAUGHT_REWARD = -10;
-static constexpr Reward CATCH_REWARD = 10;
-
-static constexpr int MAX_VELOCITY = 30;
-static constexpr int WINDOW_WIDTH = 800;
-static constexpr int WINDOW_HEIGHT = 600;
-static constexpr int DISTANCE_THRESHOLD = 100;
+static constexpr int MAX_VELOCITY = 3;
 static const std::string TAGGAME_HOST = "127.0.0.1";
 static const int TAGGAME_PORT = 12345;
 
 // (taggedVelocity, myVelocity, distance, tagChanged)
-using State = std::tuple<Eigen::Vector2d, Eigen::Vector2d, int, bool>;
+using State = std::tuple<Eigen::Vector2d, Eigen::Vector2d, int>;
 // the x and y components of the velocity vector
 using Action = std::tuple<int, int>;
 
@@ -41,7 +32,6 @@ class TagGame : public MDP<State, Action> {
     TagGame() : MDP(true), m_communicator(Communicator::getInstance()) {}
     virtual ~TagGame() { Communicator::getInstance().disconnect(); };
     void initialize() override;
-    bool is_terminal(const State &s) override;
     State deserialize_state(const std::string &);
     std::string serialize_action(Action);
     Reward calculate_reward(const State &, const State &);

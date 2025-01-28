@@ -69,8 +69,8 @@ struct StateHash {
         } else if constexpr (std::is_same_v<State, std::tuple<int, int, bool>>) {
             const auto& [a, b, c] = state;
             return std::hash<int>()(a) ^ (std::hash<int>()(b) << 1) ^ (std::hash<bool>()(c) << 2);
-        } else if constexpr (std::is_same_v<State, std::tuple<Eigen::Vector2d, Eigen::Vector2d, int, bool>>) {
-            const auto& [vec1, vec2, dist, tag_changed] = state;
+        } else if constexpr (std::is_same_v<State, std::tuple<Eigen::Vector2d, Eigen::Vector2d, int>>) {
+            const auto& [vec1, vec2, d] = state;
             size_t result = 0;
 
             for (int i = 0; i < vec1.size(); ++i) {
@@ -81,8 +81,7 @@ struct StateHash {
                 result ^= std::hash<double>()(vec2(i)) + 0x9e3779b9 + (result << 6) + (result >> 2);
             }
 
-            result ^= std::hash<int>()(dist) + 0x9e3779b9 + (result << 6) + (result >> 2);
-            result ^= std::hash<bool>()(tag_changed) + 0x9e3779b9 + (result << 6) + (result >> 2);
+            result ^= std::hash<int>()(d) + 0x9e3779b9 + (result << 6) + (result >> 2);
 
             return result;
         } else {
@@ -127,16 +126,15 @@ inline std::string key_to_string<std::pair<std::tuple<int, int, bool>, bool>>(
 }
 
 template <>
-inline std::string key_to_string<std::tuple<Eigen::Vector2d, Eigen::Vector2d, int, bool>>(
-    const std::tuple<Eigen::Vector2d, Eigen::Vector2d, int, bool>& key) {
-    const auto& [vec1, vec2, dist, flag] = key;
+inline std::string key_to_string<std::tuple<Eigen::Vector2d, Eigen::Vector2d, int>>(
+    const std::tuple<Eigen::Vector2d, Eigen::Vector2d, int>& key) {
+    const auto& [vec1, vec2, dist] = key;
 
     auto vec_to_string = [](const Eigen::Vector2d& vec) {
         return "(" + std::to_string(static_cast<int>(vec.x())) + ", " + std::to_string(static_cast<int>(vec.y())) + ")";
     };
 
-    return "{" + vec_to_string(vec1) + ", " + vec_to_string(vec2) + ", " + std::to_string(dist) + ", " +
-           (flag ? "true" : "false") + "}";
+    return "{" + vec_to_string(vec1) + ", " + vec_to_string(vec2) + ", " + std::to_string(dist) + "}";
 }
 
 template <typename State, typename Action>
@@ -195,19 +193,19 @@ void serialize_to_json(const std::unordered_map<std::pair<std::tuple<int, int, b
 
 template <typename Value, typename Hash>
 void serialize_to_json(
-    const std::unordered_map<std::pair<std::tuple<Eigen::Vector2d, Eigen::Vector2d, int, bool>, std::tuple<int, int>>,
-                             Value, Hash>& map,
+    const std::unordered_map<std::pair<std::tuple<Eigen::Vector2d, Eigen::Vector2d, int>, std::tuple<int, int>>, Value,
+                             Hash>& map,
     const std::string& filename) {
     nlohmann::json j;
     for (const auto& [key, value] : map) {
         const auto& [state, action] = key;
-        const auto& [vec1, vec2, integer, boolean] = state;
+        const auto& [vec1, vec2, integer] = state;
         const auto& [action_x, action_y] = action;
 
         std::string key_string = "([" + std::to_string(vec1.x()) + ", " + std::to_string(vec1.y()) + "], " + "[" +
                                  std::to_string(vec2.x()) + ", " + std::to_string(vec2.y()) + "], " +
-                                 std::to_string(integer) + ", " + (boolean ? "true" : "false") + "), " + "Action(" +
-                                 std::to_string(action_x) + ", " + std::to_string(action_y) + ")";
+                                 std::to_string(integer) + "), " + "Action(" + std::to_string(action_x) + ", " +
+                                 std::to_string(action_y) + ")";
 
         j[key_string] = value;
     }

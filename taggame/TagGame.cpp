@@ -24,8 +24,6 @@ void TagGame::initialize() {
     }
 }
 
-bool TagGame::is_terminal(const State& s) { return std::get<3>(s); }
-
 State TagGame::deserialize_state(const std::string& str_state) {
     try {
         nlohmann::json gameState = nlohmann::json::parse(str_state);
@@ -33,16 +31,14 @@ State TagGame::deserialize_state(const std::string& str_state) {
         Eigen::Vector2d myVelocity(gameState["mv"][0], gameState["mv"][1]);
         Eigen::Vector2d taggedVelocity(gameState["tv"][0], gameState["tv"][1]);
         int distance = gameState["d"];
-        bool tag_changed = gameState["tc"];
 
         std::cout << "-----------Parsed Data---------------" << std::endl;
         std::cout << "My Velocity: [" << myVelocity.transpose() << "]" << std::endl;
         std::cout << "Tagged Velocity: [" << taggedVelocity.transpose() << "]" << std::endl;
         std::cout << "Distance: [" << distance << "]" << std::endl;
-        std::cout << "Tag changed: " << (tag_changed ? "true" : "false") << std::endl;
         std::cout << "-------------------------------------" << std::endl;
 
-        return {myVelocity, taggedVelocity, distance, tag_changed};
+        return {myVelocity, taggedVelocity, distance};
     } catch (const std::exception& e) {
         std::cerr << "Error parsing JSON: " << e.what() << std::endl;
     }
@@ -61,24 +57,14 @@ std::string TagGame::serialize_action(Action a) {
 }
 
 Reward TagGame::calculate_reward(const State& old_s, const State& new_s) {
-    auto [old_tagged_velocity, old_my_velocity, old_distance, _] = old_s;
-    auto [new_tagged_velocity, new_my_velocity, new_distance, tag_changed] = new_s;
+    auto [old_tagged_velocity, old_my_velocity, old_distance] = old_s;
+    auto [new_tagged_velocity, new_my_velocity, new_distance] = new_s;
 
-    if (tag_changed) {  // terminal: the tagged player changed
-        if (old_distance == 0 && new_distance != 0) {
-            return CATCH_REWARD;  // Caught someone
-        } else if (old_distance != 0 && new_distance == 0) {
-            return CAUGHT_REWARD;  // Got caught
-        } else if (old_distance == 0 && new_distance == 0) {
-            return STAY_TAGGED_REWARD;  // Staying tagged
-        } else if (old_distance != 0 && new_distance != 0) {
-            return STAY_UNTAGGED_REWARD;  // Staying untagged
-        }
-    } else {
-        if (old_distance > DISTANCE_THRESHOLD && new_distance <= DISTANCE_THRESHOLD) {
-            return GET_CLOSER_REWARD;
-        } else if (old_distance <= DISTANCE_THRESHOLD && new_distance > DISTANCE_THRESHOLD) {
-            return GET_FURTHER_REWARD;
+    if (old_distance != 0) {
+        if (new_distance == 0) {
+            return GET_CAUGHT_REWARD;
+        } else {
+            return STAY_UNTAGGED_REWARD;
         }
     }
 
