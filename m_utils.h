@@ -46,13 +46,12 @@ struct ExtractInnerType<std::vector<T>> {
 
 namespace std {
 template <>
-struct hash<std::tuple<int, int>> {
-    size_t operator()(const std::tuple<int, int>& action) const {
-        const auto& [a, b] = action;
+struct hash<std::pair<int, int>> {
+    size_t operator()(const std::pair<int, int>& action) const {
         size_t seed = 0;
 
-        seed ^= std::hash<int>()(a) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-        seed ^= std::hash<int>()(b) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+        seed ^= std::hash<int>()(action.first) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+        seed ^= std::hash<int>()(action.second) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
 
         return seed;
     }
@@ -195,19 +194,18 @@ void serialize_to_json(const std::unordered_map<std::pair<std::tuple<int, int, b
 
 template <typename Value, typename Hash>
 void serialize_to_json(
-    const std::unordered_map<std::pair<std::tuple<std::pair<int, int>, std::pair<int, int>, int>, std::tuple<int, int>>,
+    const std::unordered_map<std::pair<std::tuple<std::pair<int, int>, std::pair<int, int>, int>, std::pair<int, int>>,
                              Value, Hash>& map,
     const std::string& filename) {
     nlohmann::json j;
     for (const auto& [key, value] : map) {
         const auto& [state, action] = key;
         const auto& [vec1, vec2, integer] = state;
-        const auto& [action_x, action_y] = action;
 
         std::string key_string = "([" + std::to_string(vec1.first) + ", " + std::to_string(vec1.second) + "], " + "[" +
                                  std::to_string(vec2.first) + ", " + std::to_string(vec2.second) + "], " +
-                                 std::to_string(integer) + "), " + "(" + std::to_string(action_x) + ", " +
-                                 std::to_string(action_y) + ")";
+                                 std::to_string(integer) + "), " + "(" + std::to_string(action.first) + ", " +
+                                 std::to_string(action.second) + ")";
 
         j[key_string] = value;
     }

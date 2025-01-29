@@ -25,8 +25,8 @@ class StochasticPolicy : public Policy<State, Action> {
         if (action_probs.empty()) {
             if (this->m_actions.empty()) {
                 throw std::runtime_error(
-                    "Trying to call get_safe_action_probs (which means you are dealing with uninitialized states) when "
-                    "m_actions is empty! You most likely forgot to call partial_initialize first.");
+                    "Trying to call get_safe_action_probs when action_probs and m_actions is empty (which means you "
+                    "are dealing with uninitialized states). You most likely forgot to call partial_initialize first.");
             }
 
             for (const auto& action : this->m_actions) {  // equi-probable assignment of actions on new state

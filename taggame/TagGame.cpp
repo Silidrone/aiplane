@@ -15,34 +15,16 @@ void TagGame::initialize() {
             "control.");
     }
 
-    for (int vx = -MAX_VELOCITY; vx <= MAX_VELOCITY; ++vx) {
-        for (int vy = -MAX_VELOCITY; vy <= MAX_VELOCITY; ++vy) {
-            if (vx * vx + vy * vy <= MAX_VELOCITY * MAX_VELOCITY) {
-                m_all_actions.emplace_back(std::make_tuple(vx, vy));
+    for (const auto& mv : DIRECTION_VECTORS) {
+        for (const auto& tv : DIRECTION_VECTORS) {
+            for (int distance = MIN_DISTANCE; distance < MAX_DISTANCE; ++distance) {
+                State s = std::make_tuple(mv, tv, distance);
+                m_S.push_back(s);
+                m_A[s] = DIRECTION_VECTORS;
             }
         }
     }
 }
-
-State TagGame::deserialize_state(const std::string& str_state) {
-    try {
-        nlohmann::json gameState = nlohmann::json::parse(str_state);
-
-        std::pair<int, int> myVelocity(gameState["mv"][0], gameState["mv"][1]);
-        std::pair<int, int> taggedVelocity(gameState["tv"][0], gameState["tv"][1]);
-        int distance = gameState["d"];
-
-        // std::cout << "Received: ([" << myVelocity.first << ", " << myVelocity.second << "], [" <<
-        // taggedVelocity.first
-        //           << ", " << taggedVelocity.second << "], " << distance << std::endl;
-
-        return {myVelocity, taggedVelocity, distance};
-    } catch (const std::exception& e) {
-        std::cerr << "Error parsing JSON: " << e.what() << std::endl;
-    }
-}
-
-bool TagGame::is_terminal(const State& s) { return std::get<2>(s) == 0; }
 
 std::string TagGame::serialize_action(Action a) {
     nlohmann::json serialized_action;
@@ -56,28 +38,41 @@ std::string TagGame::serialize_action(Action a) {
     return serialized_action.dump();
 }
 
+State TagGame::deserialize_state(const std::string& str_state) {
+    try {
+        nlohmann::json gameState = nlohmann::json::parse(str_state);
+
+        std::pair<int, int> myVelocity(gameState["mv"][0], gameState["mv"][1]);
+        std::pair<int, int> taggedVelocity(gameState["tv"][0], gameState["tv"][1]);
+        int distance = gameState["d"];
+
+        std::cout << "Received: ([" << myVelocity.first << ", " << myVelocity.second << "], [" << taggedVelocity.first
+                  << ", " << taggedVelocity.second << "], " << distance << std::endl;
+
+        return {myVelocity, taggedVelocity, distance};
+    } catch (const std::exception& e) {
+        std::cerr << "Error parsing JSON: " << e.what() << std::endl;
+    }
+}
+
+bool TagGame::is_terminal(const State& s) { return std::get<2>(s) == 0; }
+
 Reward TagGame::calculate_reward(const State& old_s, const State& new_s) {
     auto [old_tagged_velocity, old_my_velocity, old_distance] = old_s;
     auto [new_tagged_velocity, new_my_velocity, new_distance] = new_s;
 
-    // if (old_distance != 0 && new_distance == 0) {
-    //     return GET_CAUGHT_REWARD;
-    // }
-    // else if (new_distance != 0) {
-    //     Reward r = 0;
-    //     if (new_distance > DISTANCE_THRESHOLD) {
-    //         r += STAY_FURTHER_REWARD;
-    //     } else {
-    //         r += STAY_CLOSER_REWARD;
-    //     }
+    if (new_distance == 0) return GET_CAUGHT_REWARD;
+    Reward r = 0;
 
-    //     return r;
-    // }
+    double distance_factor = (new_distance - 1) / 3.0;
+    r += distance_factor * MAX_DISTANCE_REWARD + (1 - distance_factor) * MIN_DISTANCE_PENALTY;
 
-    Reward r = (new_distance - old_distance) * 1;
+    if (new_my_velocity != old_my_velocity) {
+        r += JITTER_REWARD;
+    }
 
-    if (new_distance < DISTANCE_THRESHOLD) {
-        r += STAY_CLOSER_REWARD;
+    if (new_my_velocity == std::make_pair(0, 0)) {
+        r += STATIONARY_REWARD;
     }
 
     return r;

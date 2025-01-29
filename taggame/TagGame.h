@@ -10,20 +10,23 @@
 
 static constexpr double DISCOUNT_RATE = 1;  // no discounting
 
-// static constexpr Reward STAY_UNTAGGED_REWARD = 1;
-static constexpr Reward STAY_FURTHER_REWARD = 0;
-static constexpr Reward STAY_CLOSER_REWARD = -3;
-// static constexpr Reward GET_CAUGHT_REWARD = -50000000;
+static constexpr Reward MAX_DISTANCE_REWARD = 1000;
+static constexpr Reward MIN_DISTANCE_PENALTY = -20;
+static constexpr Reward GET_CAUGHT_REWARD = -5000;
+static constexpr Reward JITTER_REWARD = -50;
+static constexpr Reward STATIONARY_REWARD = -1000;
 
-static constexpr int MAX_VELOCITY = 3;
-static constexpr int DISTANCE_THRESHOLD = 600;
+static const std::vector<std::pair<int, int>> DIRECTION_VECTORS = {{0, 0},  {1, 0},   {1, 1},  {0, 1}, {-1, 1},
+                                                                   {-1, 0}, {-1, -1}, {0, -1}, {1, -1}};
+static constexpr int MIN_DISTANCE = 0;
+static constexpr int MAX_DISTANCE = 5;
 static const std::string TAGGAME_HOST = "127.0.0.1";
 static const int TAGGAME_PORT = 12345;
 
 // (taggedVelocity, myVelocity, distance, tagChanged)
 using State = std::tuple<std::pair<int, int>, std::pair<int, int>, int>;
 // the x and y components of the velocity vector
-using Action = std::tuple<int, int>;
+using Action = std::pair<int, int>;
 
 class TagGame : public MDP<State, Action> {
    protected:
@@ -35,8 +38,8 @@ class TagGame : public MDP<State, Action> {
     virtual ~TagGame() { Communicator::getInstance().disconnect(); };
     void initialize() override;
     bool is_terminal(const State &s) override;
-    State deserialize_state(const std::string &);
     std::string serialize_action(Action);
+    State deserialize_state(const std::string &);
     Reward calculate_reward(const State &, const State &);
     State reset() override;
     std::pair<State, Reward> step(const State &, const Action &) override;
