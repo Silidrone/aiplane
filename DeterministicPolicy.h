@@ -43,5 +43,18 @@ class DeterministicPolicy : public Policy<State, Action> {
         }
     }
 
+    Action fallback_action() {
+        if (this->m_actions.empty()) {
+            throw std::runtime_error(
+                "Trying to call fallback_action when m_actions is empty! You most likely forgot to call "
+                "partial_initialize first.");
+        }
+
+        static thread_local std::mt19937 generator(std::random_device{}());
+        std::uniform_int_distribution<int> distribution(0, this->m_actions.size() - 1);
+
+        return this->m_actions[distribution(generator)];
+    }
+
     const std::unordered_map<State, Action, StateHash<State>>& get_container() const { return m_policy_map; }
 };

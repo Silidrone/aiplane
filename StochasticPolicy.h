@@ -19,6 +19,24 @@ class StochasticPolicy : public Policy<State, Action> {
     StochasticPolicy() {}
     virtual ~StochasticPolicy() = default;
 
+    std::map<Action, double>& get_safe_action_probs(const State& s) {
+        std::map<Action, double>& action_probs = m_policy_map[s];
+
+        if (action_probs.empty()) {
+            if (this->m_actions.empty()) {
+                throw std::runtime_error(
+                    "Trying to call get_safe_action_probs (which means you are dealing with uninitialized states) when "
+                    "m_actions is empty! You most likely forgot to call partial_initialize first.");
+            }
+
+            for (const auto& action : this->m_actions) {  // equi-probable assignment of actions on new state
+                action_probs[action] = 1.0 / this->m_actions.size();
+            }
+        }
+
+        return action_probs;
+    }
+
     virtual void initialize(const std::vector<State>& states,
                             const std::unordered_map<State, std::vector<Action>, StateHash<State>>& actions) override {
         for (const State& s : states) {
@@ -33,13 +51,8 @@ class StochasticPolicy : public Policy<State, Action> {
     }
 
     virtual Action sample(const State& state) override {
-        if (m_policy_map.find(state) == m_policy_map.end()) {
-            Action action = this->fallback_action();
-            this->set(state, action);
-            return action;
-        }
+        auto& action_probs = this->get_safe_action_probs(state);
 
-        const auto& action_probs = m_policy_map.at(state);
         double cumulative_probability = 0.0;
         double random = random_value(0.0, 1.0);  // Generate a random value in [0, 1]
 
@@ -54,7 +67,7 @@ class StochasticPolicy : public Policy<State, Action> {
     }
 
     virtual Action optimal_action(const State& state) override {
-        const auto& action_probs = m_policy_map.at(state);
+        auto& action_probs = m_policy_map.at(state);
 
         if (action_probs.empty()) {
             throw std::runtime_error("optimal_action: No actions available for the given state in the policy map.");
@@ -84,6 +97,11 @@ class StochasticPolicy : public Policy<State, Action> {
                 probability /= total_probability;
             }
         }
+    }
+
+    void raw_assign(const State& s, std::map<Action, double> action_probs) {
+        m_policy_map[s] = std::move(action_probs);
+        normalize(s);
     }
 
     const std::unordered_map<State, std::map<Action, double>, StateHash<State>>& get_container() const {

@@ -26,7 +26,6 @@ class TD : public GPI<State, Action> {
             Action a = this->m_policy->sample(s);
             do {  // step loop
                 auto [s_prime, r] = this->m_mdp.step(s, a);
-                std::cout << "r" << r << std::endl;
                 if (this->m_mdp.is_terminal(s_prime)) {
                     this->m_Q[{s, a}] = this->Q(s, a) + this->step_size * (r - this->Q(s, a));
                 } else {

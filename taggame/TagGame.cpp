@@ -17,7 +17,7 @@ void TagGame::initialize() {
 
     for (int vx = -MAX_VELOCITY; vx <= MAX_VELOCITY; ++vx) {
         for (int vy = -MAX_VELOCITY; vy <= MAX_VELOCITY; ++vy) {
-            if (vx * vx + vy * vy == MAX_VELOCITY * MAX_VELOCITY) {
+            if (vx * vx + vy * vy <= MAX_VELOCITY * MAX_VELOCITY) {
                 m_all_actions.emplace_back(std::make_tuple(vx, vy));
             }
         }

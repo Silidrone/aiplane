@@ -1,10 +1,14 @@
 #pragma once
 
+#include <cerrno>
 #include <chrono>
 #include <cmath>
+#include <cstring>
 #include <fstream>
+#include <iostream>
 #include <nlohmann/json.hpp>
 #include <sstream>
+#include <stdexcept>
 #include <tuple>
 #include <type_traits>
 #include <unordered_map>
@@ -202,7 +206,7 @@ void serialize_to_json(
 
         std::string key_string = "([" + std::to_string(vec1.first) + ", " + std::to_string(vec1.second) + "], " + "[" +
                                  std::to_string(vec2.first) + ", " + std::to_string(vec2.second) + "], " +
-                                 std::to_string(integer) + "), " + "Action(" + std::to_string(action_x) + ", " +
+                                 std::to_string(integer) + "), " + "(" + std::to_string(action_x) + ", " +
                                  std::to_string(action_y) + ")";
 
         j[key_string] = value;

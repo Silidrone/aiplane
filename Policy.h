@@ -27,17 +27,4 @@ class Policy {
     }
 
     virtual void partial_initialize(const std::vector<Action> &actions) { m_actions = actions; }
-
-    virtual Action fallback_action() {
-        if (m_actions.empty()) {
-            throw std::runtime_error(
-                "Trying to call fallback_action when m_actions is empty! You most likely forgot to call "
-                "partial_initialize first.");
-        }
-
-        static thread_local std::mt19937 generator(std::random_device{}());
-        std::uniform_int_distribution<int> distribution(0, m_actions.size() - 1);
-
-        return m_actions[distribution(generator)];
-    }
 };

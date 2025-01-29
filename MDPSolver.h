@@ -11,8 +11,6 @@ template <typename State, typename Action>
 class MDPSolver {
    protected:
     std::unordered_map<State, Return, StateHash<State>> m_v{};  // State-value v function
-    // TODO: Perhaps change this map to have the State as key and the value as action-return pair? Think this through as
-    // it has both its pros and cons.
     std::unordered_map<std::pair<State, Action>, Return, StateActionPairHash<State, Action>>
         m_Q;  // Action-value Q function
 

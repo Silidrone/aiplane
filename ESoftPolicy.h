@@ -21,12 +21,7 @@ class ESoftPolicy : public StochasticPolicy<State, Action> {
     }
 
     void set(const State& state, const Action& best_action) override {
-        auto& action_probs = this->m_policy_map[state];  // Dynamically creates entry if state is not found
-
-        if (action_probs.empty()) {
-            action_probs[best_action] = 1.0;
-            return;
-        }
+        auto& action_probs = this->get_safe_action_probs(state);
 
         size_t actions_count = action_probs.size();
         double uniform_probability = m_epsilon / actions_count;
@@ -39,5 +34,7 @@ class ESoftPolicy : public StochasticPolicy<State, Action> {
                 probability = uniform_probability;
             }
         }
+
+        this->normalize(state);
     }
 };
