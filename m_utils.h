@@ -138,6 +138,18 @@ inline std::string key_to_string<std::tuple<std::pair<int, int>, std::pair<int, 
     return "{" + vec_to_string(vec1) + ", " + vec_to_string(vec2) + ", " + std::to_string(dist) + "}";
 }
 
+template <>
+inline std::string key_to_string<std::pair<int, int>>(const std::pair<int, int>& key) {
+    return "(" + std::to_string(key.first) + ", " + std::to_string(key.second) + ")";
+}
+
+template <>
+inline std::string key_to_string<std::pair<std::pair<int, int>, std::pair<int, int>>>(
+    const std::pair<std::pair<int, int>, std::pair<int, int>>& key) {
+    return "((" + std::to_string(key.first.first) + ", " + std::to_string(key.first.second) + "), (" +
+           std::to_string(key.second.first) + ", " + std::to_string(key.second.second) + "))";
+}
+
 template <typename State, typename Action>
 struct StateActionPairHash {
     size_t operator()(const std::pair<State, Action>& pair) const {

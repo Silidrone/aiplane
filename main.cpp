@@ -1,6 +1,6 @@
-#include "taggame/td_solution.h"
+#include "barto_sutton_exercises/5_1/td_solution.h"
 
 int main() {
-    taggame_main();
+    blackjack_main();
     return 0;
 }

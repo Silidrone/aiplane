@@ -8,18 +8,18 @@
 #include "MDP.h"
 #include "m_types.h"
 
-static constexpr double DISCOUNT_RATE = 1;  // no discounting
+constexpr double DISCOUNT_RATE = 0.95;  // Slight discounting for better convergence
 
-static constexpr Reward MAX_DISTANCE_REWARD = 1000;
-static constexpr Reward MIN_DISTANCE_PENALTY = -20;
-static constexpr Reward GET_CAUGHT_REWARD = -5000;
-static constexpr Reward JITTER_REWARD = -50;
-static constexpr Reward STATIONARY_REWARD = -1000;
+constexpr Reward GET_CAUGHT_REWARD = -1000;
+constexpr Reward JITTER_REWARD = -50;
+constexpr Reward STATIONARY_REWARD = -500;
+constexpr Reward MAX_DISTANCE_REWARD = 200;
+constexpr Reward MIN_DISTANCE_PENALTY = -100;
 
 static const std::vector<std::pair<int, int>> DIRECTION_VECTORS = {{0, 0},  {1, 0},   {1, 1},  {0, 1}, {-1, 1},
                                                                    {-1, 0}, {-1, -1}, {0, -1}, {1, -1}};
 static constexpr int MIN_DISTANCE = 0;
-static constexpr int MAX_DISTANCE = 5;
+static constexpr int MAX_DISTANCE = 2;
 static const std::string TAGGAME_HOST = "127.0.0.1";
 static const int TAGGAME_PORT = 12345;
 

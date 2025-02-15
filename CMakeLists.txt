@@ -31,6 +31,7 @@ set(CORE_HEADERS
     ${CMAKE_SOURCE_DIR}/ESoftPolicy.h
     ${CMAKE_SOURCE_DIR}/MC_FV.h
     ${CMAKE_SOURCE_DIR}/ValueIteration.h
+    ${CMAKE_SOURCE_DIR}/DerivedStochasticPolicy.h
     ${CMAKE_SOURCE_DIR}/taggame/TagGame.h
     ${CMAKE_SOURCE_DIR}/taggame/Communicator.h
 )
@@ -48,12 +49,14 @@ set(EXERCISES_HEADERS
     ${CMAKE_SOURCE_DIR}/barto_sutton_exercises/4_7/CarRentalEnvironment.h
     ${CMAKE_SOURCE_DIR}/barto_sutton_exercises/4_9/GamblersProblemEnvironment.h
     ${CMAKE_SOURCE_DIR}/barto_sutton_exercises/5_1/Blackjack.h
+    ${CMAKE_SOURCE_DIR}/barto_sutton_exercises/6_9/WindyGridworld.h
 )
 
 set(EXERCISES_SOURCES
     ${CMAKE_SOURCE_DIR}/barto_sutton_exercises/4_7/CarRentalEnvironment.cpp
     ${CMAKE_SOURCE_DIR}/barto_sutton_exercises/4_9/GamblersProblemEnvironment.cpp
     ${CMAKE_SOURCE_DIR}/barto_sutton_exercises/5_1/Blackjack.cpp
+    ${CMAKE_SOURCE_DIR}/barto_sutton_exercises/6_9/WindyGridworld.cpp
 )
 
 add_executable(output_executable ${CORE_SOURCES} ${CORE_HEADERS} ${EXERCISES_HEADERS} ${EXERCISES_SOURCES})

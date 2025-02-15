@@ -17,7 +17,7 @@ void TagGame::initialize() {
 
     for (const auto& mv : DIRECTION_VECTORS) {
         for (const auto& tv : DIRECTION_VECTORS) {
-            for (int distance = MIN_DISTANCE; distance < MAX_DISTANCE; ++distance) {
+            for (int distance = MIN_DISTANCE; distance <= MAX_DISTANCE; ++distance) {
                 State s = std::make_tuple(mv, tv, distance);
                 m_S.push_back(s);
                 m_A[s] = DIRECTION_VECTORS;
@@ -46,8 +46,9 @@ State TagGame::deserialize_state(const std::string& str_state) {
         std::pair<int, int> taggedVelocity(gameState["tv"][0], gameState["tv"][1]);
         int distance = gameState["d"];
 
-        std::cout << "Received: ([" << myVelocity.first << ", " << myVelocity.second << "], [" << taggedVelocity.first
-                  << ", " << taggedVelocity.second << "], " << distance << std::endl;
+        // std::cout << "Received: ([" << myVelocity.first << ", " << myVelocity.second << "], [" <<
+        // taggedVelocity.first
+        //           << ", " << taggedVelocity.second << "], " << distance << std::endl;
 
         return {myVelocity, taggedVelocity, distance};
     } catch (const std::exception& e) {
@@ -61,21 +62,13 @@ Reward TagGame::calculate_reward(const State& old_s, const State& new_s) {
     auto [old_tagged_velocity, old_my_velocity, old_distance] = old_s;
     auto [new_tagged_velocity, new_my_velocity, new_distance] = new_s;
 
-    if (new_distance == 0) return GET_CAUGHT_REWARD;
-    Reward r = 0;
+    if (new_distance == 0) return -1000;
 
-    double distance_factor = (new_distance - 1) / 3.0;
-    r += distance_factor * MAX_DISTANCE_REWARD + (1 - distance_factor) * MIN_DISTANCE_PENALTY;
+    if (new_my_velocity.first == 0 && new_my_velocity.second == 0) return -50;
 
-    if (new_my_velocity != old_my_velocity) {
-        r += JITTER_REWARD;
-    }
+    if (new_my_velocity != old_my_velocity) return -50;
 
-    if (new_my_velocity == std::make_pair(0, 0)) {
-        r += STATIONARY_REWARD;
-    }
-
-    return r;
+    return 100;
 }
 
 State TagGame::reset() {
@@ -86,6 +79,8 @@ State TagGame::reset() {
 std::pair<State, Reward> TagGame::step(const State& old_s, const Action& action) {
     m_communicator.sendAction(serialize_action(action));
     State new_s = deserialize_state(m_communicator.receiveState());
+
+    // std::cout << "action: " << action.first << action.second << std::endl;
 
     return {new_s, calculate_reward(old_s, new_s)};
 }
