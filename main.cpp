@@ -1,6 +1,6 @@
-#include "barto_sutton_exercises/6_9/td_solution.h"
+#include "taggame/td_solution.h"
 
 int main() {
-    windygridworld_main();
+    taggame_main();
     return 0;
 }

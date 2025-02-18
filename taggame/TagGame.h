@@ -19,7 +19,7 @@ constexpr Reward MIN_DISTANCE_PENALTY = -100;
 static const std::vector<std::pair<int, int>> DIRECTION_VECTORS = {{0, 0},  {1, 0},   {1, 1},  {0, 1}, {-1, 1},
                                                                    {-1, 0}, {-1, -1}, {0, -1}, {1, -1}};
 static constexpr int MIN_DISTANCE = 0;
-static constexpr int MAX_DISTANCE = 2;
+static constexpr int MAX_DISTANCE = 9;
 static const std::string TAGGAME_HOST = "127.0.0.1";
 static const int TAGGAME_PORT = 12345;
 

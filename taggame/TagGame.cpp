@@ -20,7 +20,7 @@ void TagGame::initialize() {
             for (int distance = MIN_DISTANCE; distance <= MAX_DISTANCE; ++distance) {
                 State s = std::make_tuple(mv, tv, distance);
                 m_S.push_back(s);
-                m_A[s] = DIRECTION_VECTORS;
+                m_A[s] = std::vector<std::pair<int, int>>(DIRECTION_VECTORS.begin() + 1, DIRECTION_VECTORS.end());
             }
         }
     }
@@ -46,9 +46,8 @@ State TagGame::deserialize_state(const std::string& str_state) {
         std::pair<int, int> taggedVelocity(gameState["tv"][0], gameState["tv"][1]);
         int distance = gameState["d"];
 
-        // std::cout << "Received: ([" << myVelocity.first << ", " << myVelocity.second << "], [" <<
-        // taggedVelocity.first
-        //           << ", " << taggedVelocity.second << "], " << distance << std::endl;
+        std::cout << "Received: ([" << myVelocity.first << ", " << myVelocity.second << "], [" << taggedVelocity.first
+                  << ", " << taggedVelocity.second << "], " << distance << std::endl;
 
         return {myVelocity, taggedVelocity, distance};
     } catch (const std::exception& e) {
@@ -59,16 +58,14 @@ State TagGame::deserialize_state(const std::string& str_state) {
 bool TagGame::is_terminal(const State& s) { return std::get<2>(s) == 0; }
 
 Reward TagGame::calculate_reward(const State& old_s, const State& new_s) {
-    auto [old_tagged_velocity, old_my_velocity, old_distance] = old_s;
-    auto [new_tagged_velocity, new_my_velocity, new_distance] = new_s;
+    auto [old_my_velocity, old_tagged_velocity, old_distance] = old_s;
+    auto [new_my_velocity, new_tagged_velocity, new_distance] = new_s;
 
-    if (new_distance == 0) return -1000;
+    if (new_distance == MIN_DISTANCE) {
+        return -10000;
+    }
 
-    if (new_my_velocity.first == 0 && new_my_velocity.second == 0) return -50;
-
-    if (new_my_velocity != old_my_velocity) return -50;
-
-    return 100;
+    return 100 * (new_distance - MIN_DISTANCE);
 }
 
 State TagGame::reset() {

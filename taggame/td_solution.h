@@ -14,8 +14,8 @@
 #include "taggame/TagGame.h"
 
 static constexpr long double N_OF_EPISODES = 50000;
-static constexpr double POLICY_EPSILON = 0.01;
-static constexpr double TD_ALPHA = 0.5;
+static constexpr double POLICY_EPSILON = 0.05;
+static constexpr double TD_ALPHA = 0.35;
 static const std::string Q_INPUT_FILE = "taggame_q_function.json";
 static const std::string POLICY_INPUT_FILE = "taggame_optimal_policy.json";
 
