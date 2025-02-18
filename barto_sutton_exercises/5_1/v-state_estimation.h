@@ -59,17 +59,17 @@ inline int blackjack_main() {
     environment.initialize();
 
     DeterministicPolicy<State, Action> blackjack_player_policy;
-    construct_player_policy(blackjack_player_policy);
 
     MC_FV<State, Action> mdp_solver(environment, &blackjack_player_policy, DISCOUNT_RATE, N_OF_EPISODES);
     mdp_solver.initialize();
 
+    construct_player_policy(blackjack_player_policy);
     double time_taken = benchmark([&]() { mdp_solver.value_estimation(); });
 
     std::cout << "Time taken: " << time_taken << std::endl;
 
     serialize_to_json(mdp_solver.get_v(), "blackjack-value-function-estimation.json");
-    plot_v_f(mdp_solver, true);
+    plot_v_f(mdp_solver, false);
 
     return 0;
 }

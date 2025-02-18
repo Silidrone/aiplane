@@ -5,11 +5,11 @@
 #include <functional>
 #include <iostream>
 
-#include "DeterministicPolicy.h"
+#include "DerivedStochasticPolicy.h"
 #include "TD.h"
 #include "WindyGridworld.h"
 
-static constexpr int N_OF_EPISODES = 2000;
+static constexpr int N_OF_EPISODES = 6000;
 static constexpr double DISCOUNT_RATE = 0.9;  // no discounting
 static constexpr double EPSILON = 0.1;
 static constexpr double ALPHA = 0.1;  // learning rate

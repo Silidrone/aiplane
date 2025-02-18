@@ -22,16 +22,17 @@ find_package(nlohmann_json 3.2.0 REQUIRED)
 set(CORE_HEADERS
     ${CMAKE_SOURCE_DIR}/MDP.h
     ${CMAKE_SOURCE_DIR}/MDPSolver.h
+    ${CMAKE_SOURCE_DIR}/Policy.h
+    ${CMAKE_SOURCE_DIR}/DerivedPolicy.h
+    ${CMAKE_SOURCE_DIR}/DerivedDeterministicPolicy.h
+    ${CMAKE_SOURCE_DIR}/DerivedStochasticPolicy.h
     ${CMAKE_SOURCE_DIR}/GPI.h
+    ${CMAKE_SOURCE_DIR}/m_utils.h
     ${CMAKE_SOURCE_DIR}/QValuePolicyIteration.h
     ${CMAKE_SOURCE_DIR}/VValuePolicyIteration.h
-    ${CMAKE_SOURCE_DIR}/m_utils.h
-    ${CMAKE_SOURCE_DIR}/DeterministicPolicy.h
-    ${CMAKE_SOURCE_DIR}/StochasticPolicy.h
-    ${CMAKE_SOURCE_DIR}/ESoftPolicy.h
-    ${CMAKE_SOURCE_DIR}/MC_FV.h
     ${CMAKE_SOURCE_DIR}/ValueIteration.h
-    ${CMAKE_SOURCE_DIR}/DerivedStochasticPolicy.h
+    ${CMAKE_SOURCE_DIR}/MC_FV.h
+    ${CMAKE_SOURCE_DIR}/TD.h
     ${CMAKE_SOURCE_DIR}/taggame/TagGame.h
     ${CMAKE_SOURCE_DIR}/taggame/Communicator.h
 )

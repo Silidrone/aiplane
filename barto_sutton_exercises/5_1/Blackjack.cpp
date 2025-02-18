@@ -111,4 +111,28 @@ std::pair<State, Reward> Blackjack::step(const State& state, const Action& hit) 
     }
 }
 
-void Blackjack::plot_policy(DeterministicPolicy<State, Action>& pi) {}
+void Blackjack::plot_policy(const std::unordered_map<State, Action, StateHash<State>>& optimal_policy,
+                            bool usable_ace_flag) {
+    std::vector<double> x, y;
+    std::vector<double> colors;
+
+    for (const auto& [state, action] : optimal_policy) {
+        if (std::get<2>(state) == usable_ace_flag) {
+            double player_sum = static_cast<double>(std::get<0>(state));
+            double dealer_face_up = static_cast<double>(std::get<1>(state));
+
+            x.push_back(dealer_face_up);
+            y.push_back(player_sum);
+            colors.push_back(action ? 1.0 : 0.0);  // 1 for action "hit", 0 for action "stick"
+        }
+    }
+
+    auto fig = matplot::figure(true);
+    auto scatter_plot = matplot::scatter(x, y, 50, colors);
+    scatter_plot->marker("x");
+    matplot::colormap({{0.0, 0.0, 1.0}, {1.0, 0.0, 0.0}});  // Blue for "stick", Red for "hit"
+    matplot::xlabel("Dealer's Face-Up Card");
+    matplot::ylabel("Player's Total Sum");
+    matplot::title(usable_ace_flag ? "Policy with Usable Ace" : "Policy without Usable Ace");
+    matplot::show();
+}

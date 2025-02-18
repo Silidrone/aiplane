@@ -5,8 +5,7 @@
 #include <functional>
 #include <iostream>
 
-#include "DeterministicPolicy.h"
-#include "ESoftPolicy.h"
+#include "DerivedStochasticPolicy.h"
 #include "MC_FV.h"
 #include "barto_sutton_exercises/5_1/Blackjack.h"
 
@@ -41,37 +40,11 @@ inline void plot_v_f(MDPSolver<State, Action>& mdp_solver, bool usable_ace_flag)
     matplot::show();
 }
 
-inline void plot_policy(const MDP<State, Action>& mdp, Policy<State, Action>& policy, bool usable_ace_flag) {
-    std::vector<double> x, y;
-    std::vector<double> colors;
-
-    for (const auto& state : mdp.S()) {
-        if (std::get<2>(state) == usable_ace_flag) {
-            double player_sum = static_cast<double>(std::get<0>(state));
-            double dealer_face_up = static_cast<double>(std::get<1>(state));
-            bool action = policy.optimal_action(state);
-            x.push_back(dealer_face_up);
-            y.push_back(player_sum);
-            colors.push_back(action ? 1.0 : 0.0);
-        }
-    }
-
-    auto fig = matplot::figure(true);
-    auto scatter_plot = matplot::scatter(x, y, 50, colors);
-    scatter_plot->marker("x");
-    matplot::colormap({{0.0, 0.0, 1.0}, {1.0, 0.0, 0.0}});
-    matplot::xlabel("Dealer's Face-Up Card");
-    matplot::ylabel("Player's Total Sum");
-    matplot::title(usable_ace_flag ? "Policy with Usable Ace" : "Policy without Usable Ace");
-    matplot::show();
-}
-
 inline int blackjack_main() {
     Blackjack environment;
     environment.initialize();
 
-    ESoftPolicy<State, Action> policy(0.15);
-    policy.initialize(environment.S(), environment.A());
+    DerivedStochasticPolicy<State, Action> policy(0.15);
 
     MC_FV<State, Action> mdp_solver(environment, &policy, DISCOUNT_RATE, N_OF_EPISODES);
     mdp_solver.initialize();
@@ -80,13 +53,11 @@ inline int blackjack_main() {
 
     std::cout << "Time taken: " << time_taken << std::endl;
 
-    DeterministicPolicy<State, Action> optimal_policy(policy);
+    auto optimal_policy = mdp_solver.get_optimal_policy();
 
     serialize_to_json(mdp_solver.get_Q(), "blackjack-optimal-Q.json");
-    serialize_to_json(policy.get_container(), "blackjack-stochastic-optimal-policy.json");
-    serialize_to_json(optimal_policy.get_container(), "blackjack-deterministic-optimal-policy.json");
-    // plot_v_f(mdp_solver, true);
-    plot_policy(environment, optimal_policy, false);
+    serialize_to_json(optimal_policy, "blackjack-optimal-policy.json");
+    environment.plot_policy(optimal_policy, false);
 
     return 0;
 }

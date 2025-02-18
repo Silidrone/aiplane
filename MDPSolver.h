@@ -167,4 +167,6 @@ class MDPSolver {
 
         return true;
     }
+
+    MDP<State, Action> &mdp() { return m_mdp; }
 };

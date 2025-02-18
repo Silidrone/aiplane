@@ -1,6 +1,6 @@
-#include "barto_sutton_exercises/5_1/td_solution.h"
+#include "barto_sutton_exercises/6_9/td_solution.h"
 
 int main() {
-    blackjack_main();
+    windygridworld_main();
     return 0;
 }

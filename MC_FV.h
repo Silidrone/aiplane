@@ -35,7 +35,9 @@ class MC_FV : public GPI<State, Action> {
    public:
     MC_FV(MDP<State, Action>& mdp_core, Policy<State, Action>* policy, const double discount_rate,
           const double number_of_episodes)
-        : GPI<State, Action>(mdp_core, discount_rate, number_of_episodes), m_policy(policy){};
+        : GPI<State, Action>(mdp_core, discount_rate, number_of_episodes), m_policy(policy) {
+        policy->initialize(this);
+    };
 
     void mc_main(const std::function<void(const State&, const Action&, Return)>& update_fn) {
         int episode_n = 0;
@@ -69,9 +71,6 @@ class MC_FV : public GPI<State, Action> {
             N[{s, a}]++;
             auto error = G - this->m_Q[{s, a}];
             this->m_Q[{s, a}] += error / N[{s, a}];
-
-            auto [maximizing_action, max_return] = this->Q_best_action(s);
-            this->m_policy->set(s, maximizing_action);
         });
     }
 

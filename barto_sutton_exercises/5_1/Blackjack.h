@@ -36,5 +36,6 @@ class Blackjack : public MDP<State, Action> {
     bool is_terminal(const State &s) override;
     State reset() override;
     std::pair<State, Reward> step(const State &, const Action &) override;
-    void plot_policy(DeterministicPolicy<State, Action> &);
+
+    void plot_policy(const std::unordered_map<State, Action, StateHash<State>> &, bool);
 };

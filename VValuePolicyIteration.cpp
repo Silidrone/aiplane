@@ -8,7 +8,7 @@ VValuePolicyIteration<State, Action>::VValuePolicyIteration(MDP<State, Action> &
 template <typename State, typename Action>
 void VValuePolicyIteration<State, Action>::initialize() {
     GPI<State, Action>::initialize();
-    this->m_policy.initialize(this->m_mdp.S(), this->m_mdp.A());
+    this->m_policy.initialize(this);
 }
 
 template <typename State, typename Action>

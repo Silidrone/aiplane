@@ -9,7 +9,6 @@
 #include "DerivedStochasticPolicy.h"
 #include "DeterministicPolicy.h"
 #include "MDPSolver.h"
-#include "StochasticPolicy.h"
 #include "TD.h"
 #include "m_utils.h"
 #include "taggame/TagGame.h"

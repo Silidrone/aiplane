@@ -2,7 +2,6 @@
 
 #include <matplot/matplot.h>
 
-#include "StochasticPolicy.h"
 #include "m_utils.h"
 
 void WindyGridworld::initialize() {
