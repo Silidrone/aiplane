@@ -1,5 +1,6 @@
 #include "TagGame.h"
 
+#include <math.h>
 #include <matplot/matplot.h>
 
 #include <string>
@@ -18,9 +19,11 @@ void TagGame::initialize() {
     for (const auto& mv : DIRECTION_VECTORS) {
         for (const auto& tv : DIRECTION_VECTORS) {
             for (int distance = MIN_DISTANCE; distance <= MAX_DISTANCE; ++distance) {
-                State s = std::make_tuple(mv, tv, distance);
-                m_S.push_back(s);
-                m_A[s] = std::vector<std::pair<int, int>>(DIRECTION_VECTORS.begin() + 1, DIRECTION_VECTORS.end());
+                for (int i = 0; i <= 1; i++) {  // isTouchingWall: true, false
+                    State s = std::make_tuple(mv, tv, distance, i);
+                    m_S.push_back(s);
+                    m_A[s] = std::vector<std::pair<int, int>>(DIRECTION_VECTORS.begin() + 1, DIRECTION_VECTORS.end());
+                }
             }
         }
     }
@@ -45,11 +48,12 @@ State TagGame::deserialize_state(const std::string& str_state) {
         std::pair<int, int> myVelocity(gameState["mv"][0], gameState["mv"][1]);
         std::pair<int, int> taggedVelocity(gameState["tv"][0], gameState["tv"][1]);
         int distance = gameState["d"];
+        bool isTouchingWall = std::stoi(static_cast<std::string>(gameState["tw"])) != 0;
 
         std::cout << "Received: ([" << myVelocity.first << ", " << myVelocity.second << "], [" << taggedVelocity.first
-                  << ", " << taggedVelocity.second << "], " << distance << std::endl;
+                  << ", " << taggedVelocity.second << "], " << distance << ", " << isTouchingWall << ")" << std::endl;
 
-        return {myVelocity, taggedVelocity, distance};
+        return {myVelocity, taggedVelocity, distance, isTouchingWall};
     } catch (const std::exception& e) {
         std::cerr << "Error parsing JSON: " << e.what() << std::endl;
     }
@@ -58,14 +62,14 @@ State TagGame::deserialize_state(const std::string& str_state) {
 bool TagGame::is_terminal(const State& s) { return std::get<2>(s) == 0; }
 
 Reward TagGame::calculate_reward(const State& old_s, const State& new_s) {
-    auto [old_my_velocity, old_tagged_velocity, old_distance] = old_s;
-    auto [new_my_velocity, new_tagged_velocity, new_distance] = new_s;
+    auto [old_my_velocity, old_tagged_velocity, old_distance, old_touching_wall] = old_s;
+    auto [new_my_velocity, new_tagged_velocity, new_distance, new_touching_wall] = new_s;
 
-    if (new_distance == MIN_DISTANCE) {
-        return -10000;
+    if (new_distance == MIN_DISTANCE || new_touching_wall) {
+        return -1000000;
     }
 
-    return 100 * (new_distance - MIN_DISTANCE);
+    return 1;
 }
 
 State TagGame::reset() {

@@ -19,12 +19,12 @@ constexpr Reward MIN_DISTANCE_PENALTY = -100;
 static const std::vector<std::pair<int, int>> DIRECTION_VECTORS = {{0, 0},  {1, 0},   {1, 1},  {0, 1}, {-1, 1},
                                                                    {-1, 0}, {-1, -1}, {0, -1}, {1, -1}};
 static constexpr int MIN_DISTANCE = 0;
-static constexpr int MAX_DISTANCE = 9;
+static constexpr int MAX_DISTANCE = 5;
 static const std::string TAGGAME_HOST = "127.0.0.1";
 static const int TAGGAME_PORT = 12345;
 
 // (taggedVelocity, myVelocity, distance, tagChanged)
-using State = std::tuple<std::pair<int, int>, std::pair<int, int>, int>;
+using State = std::tuple<std::pair<int, int>, std::pair<int, int>, int, bool>;
 // the x and y components of the velocity vector
 using Action = std::pair<int, int>;
 

@@ -71,8 +71,8 @@ struct StateHash {
         } else if constexpr (std::is_same_v<State, std::tuple<int, int, bool>>) {
             const auto& [a, b, c] = state;
             return std::hash<int>()(a) ^ (std::hash<int>()(b) << 1) ^ (std::hash<bool>()(c) << 2);
-        } else if constexpr (std::is_same_v<State, std::tuple<std::pair<int, int>, std::pair<int, int>, int>>) {
-            const auto& [vec1, vec2, d] = state;
+        } else if constexpr (std::is_same_v<State, std::tuple<std::pair<int, int>, std::pair<int, int>, int, bool>>) {
+            const auto& [vec1, vec2, d, isTouchingWall] = state;
             size_t result = 0;
 
             result ^= std::hash<int>()(vec1.first) + 0x9e3779b9 + (result << 6) + (result >> 2);
@@ -82,6 +82,9 @@ struct StateHash {
             result ^= std::hash<int>()(vec2.second) + 0x9e3779b9 + (result << 6) + (result >> 2);
 
             result ^= std::hash<int>()(d) + 0x9e3779b9 + (result << 6) + (result >> 2);
+
+            // Hash the bool by converting it to an int (0 or 1)
+            result ^= std::hash<int>()(static_cast<int>(isTouchingWall)) + 0x9e3779b9 + (result << 6) + (result >> 2);
 
             return result;
         } else {
@@ -126,16 +129,17 @@ inline std::string key_to_string<std::pair<std::tuple<int, int, bool>, bool>>(
 }
 
 template <>
-inline std::string key_to_string<std::tuple<std::pair<int, int>, std::pair<int, int>, int>>(
-    const std::tuple<std::pair<int, int>, std::pair<int, int>, int>& key) {
-    const auto& [vec1, vec2, dist] = key;
+inline std::string key_to_string<std::tuple<std::pair<int, int>, std::pair<int, int>, int, bool>>(
+    const std::tuple<std::pair<int, int>, std::pair<int, int>, int, bool>& key) {
+    const auto& [vec1, vec2, dist, touchingWall] = key;
 
     auto vec_to_string = [](const std::pair<int, int>& vec) {
         return "(" + std::to_string(static_cast<int>(vec.first)) + ", " + std::to_string(static_cast<int>(vec.second)) +
                ")";
     };
 
-    return "{" + vec_to_string(vec1) + ", " + vec_to_string(vec2) + ", " + std::to_string(dist) + "}";
+    return "{" + vec_to_string(vec1) + ", " + vec_to_string(vec2) + ", " + std::to_string(dist) + ", " +
+           (touchingWall ? "1" : "0") + "}";
 }
 
 template <>
@@ -206,18 +210,20 @@ void serialize_to_json(const std::unordered_map<std::pair<std::tuple<int, int, b
 
 template <typename Value, typename Hash>
 void serialize_to_json(
-    const std::unordered_map<std::pair<std::tuple<std::pair<int, int>, std::pair<int, int>, int>, std::pair<int, int>>,
-                             Value, Hash>& map,
+    const std::unordered_map<
+        std::pair<std::tuple<std::pair<int, int>, std::pair<int, int>, int, bool>, std::pair<int, int>>, Value, Hash>&
+        map,
     const std::string& filename) {
     nlohmann::json j;
+
     for (const auto& [key, value] : map) {
         const auto& [state, action] = key;
-        const auto& [vec1, vec2, integer] = state;
+        const auto& [vec1, vec2, integer, touchingWall] = state;
 
         std::string key_string = "([" + std::to_string(vec1.first) + ", " + std::to_string(vec1.second) + "], " + "[" +
                                  std::to_string(vec2.first) + ", " + std::to_string(vec2.second) + "], " +
-                                 std::to_string(integer) + "), " + "(" + std::to_string(action.first) + ", " +
-                                 std::to_string(action.second) + ")";
+                                 std::to_string(integer) + ", " + (touchingWall ? "1" : "0") + "), " + "(" +
+                                 std::to_string(action.first) + ", " + std::to_string(action.second) + ")";
 
         j[key_string] = value;
     }
