@@ -47,7 +47,7 @@ State TagGame::deserialize_state(const std::string& str_state) {
         int distance = gameState["d"];
 
         std::cout << "Received: ([" << myVelocity.first << ", " << myVelocity.second << "], [" << taggedVelocity.first
-                  << ", " << taggedVelocity.second << "], " << distance << std::endl;
+                  << ", " << taggedVelocity.second << "], " << distance << ")" << std::endl;
 
         return {myVelocity, taggedVelocity, distance};
     } catch (const std::exception& e) {
@@ -61,11 +61,11 @@ Reward TagGame::calculate_reward(const State& old_s, const State& new_s) {
     auto [old_my_velocity, old_tagged_velocity, old_distance] = old_s;
     auto [new_my_velocity, new_tagged_velocity, new_distance] = new_s;
 
-    if (new_distance == MIN_DISTANCE) {
+    if (new_distance == 0) {
         return -10000;
     }
 
-    return 100 * (new_distance - MIN_DISTANCE);
+    return 0;
 }
 
 State TagGame::reset() {

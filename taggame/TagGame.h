@@ -8,22 +8,14 @@
 #include "MDP.h"
 #include "m_types.h"
 
-constexpr double DISCOUNT_RATE = 0.95;  // Slight discounting for better convergence
-
-constexpr Reward GET_CAUGHT_REWARD = -1000;
-constexpr Reward JITTER_REWARD = -50;
-constexpr Reward STATIONARY_REWARD = -500;
-constexpr Reward MAX_DISTANCE_REWARD = 200;
-constexpr Reward MIN_DISTANCE_PENALTY = -100;
-
 static const std::vector<std::pair<int, int>> DIRECTION_VECTORS = {{0, 0},  {1, 0},   {1, 1},  {0, 1}, {-1, 1},
                                                                    {-1, 0}, {-1, -1}, {0, -1}, {1, -1}};
-static constexpr int MIN_DISTANCE = 0;
-static constexpr int MAX_DISTANCE = 9;
+static constexpr int MIN_DISTANCE = 1;
+static constexpr int MAX_DISTANCE = 2;
 static const std::string TAGGAME_HOST = "127.0.0.1";
 static const int TAGGAME_PORT = 12345;
 
-// (taggedVelocity, myVelocity, distance, tagChanged)
+// (taggedVelocity, myVelocity, distance)
 using State = std::tuple<std::pair<int, int>, std::pair<int, int>, int>;
 // the x and y components of the velocity vector
 using Action = std::pair<int, int>;
