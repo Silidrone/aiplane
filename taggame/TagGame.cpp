@@ -48,10 +48,11 @@ State TagGame::deserialize_state(const std::string& str_state) {
         std::pair<int, int> tagVelocity(gameState["tv"][0], gameState["tv"][1]);
         bool isTagged = gameState["t"];
 
-        std::cout << "Received: mp=[" << myPosition.first << ", " << myPosition.second << "], mv=[" << myVelocity.first
-                  << ", " << myVelocity.second << "], tp=[" << tagPosition.first << ", " << tagPosition.second
-                  << "], tv=[" << tagVelocity.first << ", " << tagVelocity.second << "], tagged=" << isTagged
-                  << std::endl;
+        // std::cout << "Received: mp=[" << myPosition.first << ", " << myPosition.second << "], mv=[" <<
+        // myVelocity.first
+        //           << ", " << myVelocity.second << "], tp=[" << tagPosition.first << ", " << tagPosition.second
+        //           << "], tv=[" << tagVelocity.first << ", " << tagVelocity.second << "], tagged=" << isTagged
+        //           << std::endl;
 
         return {myPosition, myVelocity, tagPosition, tagVelocity, isTagged};
     } catch (const std::exception& e) {
@@ -72,7 +73,7 @@ Reward TagGame::calculate_reward(const State& old_s, const State& new_s) {
         return -1;
     }
 
-    return 1;
+    return 0.01;
 }
 State TagGame::reset() {
     m_communicator.sendAction(m_communicator.RESET);

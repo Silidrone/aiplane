@@ -28,6 +28,28 @@ class FA_TD : public GPI<State, Action> {
     void td_main() {
         int i = 0;
         do {  // episode loop
+            if ((i % 300) == 0) {  // every 300th episode
+                std::cout << "Episode " << i << " - Current weights and their features:" << std::endl;
+                const auto& weights = m_value_strategy->get_approximator()->get_weights();
+                std::vector<std::string> feature_descriptions = {
+                    "Dist×ActionX: +1=values moving right when far, -1=values moving left when far",
+                    "Dist×ActionY: +1=values moving down when far, -1=values moving up when far",
+                    "MovingAway: +1=values fleeing behavior, -1=values approaching predator",
+                    "LeftWall×ActionX: +1=values wall awareness, -1=ignores left wall danger",
+                    "RightWall×ActionX: +1=values wall awareness, -1=ignores right wall danger",
+                    "TopWall×ActionY: +1=values wall awareness, -1=ignores top wall danger",
+                    "BottomWall×ActionY: +1=values wall awareness, -1=ignores bottom wall danger",
+                    "SpeedDiff×Action: +1=values speed advantage, -1=devalues speed advantage",
+                    "PredatorAlignment: +1=values similar direction, -1=values opposite direction",
+                    "Bias, Bias"};
+
+                for (size_t j = 0; j < weights.size(); ++j) {
+                    std::cout << "  Weight[" << j << "] = " << weights[j] << " | Feature: " <<
+                    feature_descriptions[j]
+                              << std::endl;
+                }
+                std::cout << "------------------------------" << std::endl;
+            }
             i++;
             State s = this->m_mdp->reset();
             Action a = this->m_policy->sample(s);
