@@ -8,7 +8,7 @@
 #include "Policy.h"
 #include "m_types.h"
 
-static constexpr double MAX_VELOCITY = 3;
+static constexpr double MAX_VELOCITY = 10;
 static constexpr double MAX_X = 1000;
 static constexpr double MAX_Y = 1000;
 static const double MAX_DISTANCE = std::sqrt(MAX_X * MAX_X + MAX_Y * MAX_Y);

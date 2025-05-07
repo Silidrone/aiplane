@@ -20,8 +20,8 @@
 
 constexpr double DISCOUNT_RATE = 1;
 static constexpr long double N_OF_EPISODES = 50000000;
-static constexpr double POLICY_EPSILON = 0.15;
-static constexpr double TD_ALPHA = 0.001;
+static constexpr double POLICY_EPSILON = 0.1;
+static constexpr double TD_ALPHA = 0.01;
 static const std::string WEIGHTS_FILE = "taggame_fa_weights.json";
 static const std::string POLICY_FILE = "fa_td_taggame_optimal_policy.json";
 
@@ -72,26 +72,33 @@ inline int taggame_main() {
     };
 
     int feature_dim = 17;
-    auto approximator = new LinearFunctionApproximator<State, Action>(feature_dim, feature_extractor);
+
+    // Input layer size (feature_dim), hidden layer(s), output layer (1)
+    std::vector<int> architecture = {feature_dim, 16, 8, 1};
+
+    auto approximator = new NeuralNetworkFunctionApproximator<State, Action>(feature_extractor, architecture);
 
     auto value_strategy = new ApproximationValueStrategy<State, Action>();
     value_strategy->initialize(&environment, approximator);
+
+    static const std::string WEIGHTS_FILE = "taggame_nn_weights.json";
+    static const std::string POLICY_FILE = "nn_td_taggame_optimal_policy.json";
 
     bool weights_loaded = false;
     try {
         weights_loaded = load_approximator(approximator, output_dir + WEIGHTS_FILE);
         if (weights_loaded) {
-            std::cout << "Successfully loaded approximator weights from file." << std::endl;
+            std::cout << "Successfully loaded neural network weights from file." << std::endl;
         }
     } catch (const std::exception& e) {
-        std::cerr << "Failed to load approximator weights: " << e.what() << std::endl;
+        std::cerr << "Failed to load neural network weights: " << e.what() << std::endl;
     }
 
     EpsilonGreedyPolicy<State, Action> policy(value_strategy, POLICY_EPSILON);
     FA_TD<State, Action> mdp_solver(&environment, &policy, value_strategy, DISCOUNT_RATE, N_OF_EPISODES, TD_ALPHA);
 
     try {
-        std::cout << "Starting policy iteration..." << std::endl;
+        std::cout << "Starting policy iteration with neural network..." << std::endl;
         double time_taken = benchmark([&]() { mdp_solver.policy_iteration(); });
         std::cout << "Policy iteration completed in " << time_taken << " seconds." << std::endl;
     } catch (const std::exception& e) {
@@ -103,10 +110,10 @@ inline int taggame_main() {
     try {
         bool saved = save_approximator(approximator, WEIGHTS_FILE);
         if (saved) {
-            std::cout << "Successfully saved approximator weights to file." << std::endl;
+            std::cout << "Successfully saved neural network weights to file." << std::endl;
         }
     } catch (const std::exception& e) {
-        std::cerr << "Failed to save approximator weights: " << e.what() << std::endl;
+        std::cerr << "Failed to save neural network weights: " << e.what() << std::endl;
     }
 
     // serialize_to_json(policy.optimal(), POLICY_FILE);

@@ -61,9 +61,7 @@ State TagGame::deserialize_state(const std::string& str_state) {
     }
 }
 
-bool TagGame::is_terminal(const State& s) {
-    return std::get<4>(s);  // Terminal if I am tagged (t is true)
-}
+bool TagGame::is_terminal(const State& s) { return std::get<4>(s); }
 
 Reward TagGame::calculate_reward(const State& old_s, const State& new_s) {
     auto [old_my_pos, old_my_vel, old_tag_pos, old_tag_vel, old_is_tagged] = old_s;
