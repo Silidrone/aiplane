@@ -28,36 +28,49 @@ class FA_TD : public GPI<State, Action> {
     void td_main() {
         int i = 0;
         do {  // episode loop
-            // if ((i % 100) == 0) {
-            //     std::cout << "episodes finished " << i << std::endl;
-            //     std::cout << "Episode " << i << " - Current weights and their features:" << std::endl;
-            //     const auto& weights = m_value_strategy->get_approximator()->get_weights();
-            //     std::vector<std::string> feature_descriptions = {
-            //         "MyPosX: Normalized X position of agent",
-            //         "MyPosY: Normalized Y position of agent",
-            //         "MyVelX: Normalized X velocity of agent",
-            //         "MyVelY: Normalized Y velocity of agent",
-            //         "TagPosX: Normalized X position of tagger",
-            //         "TagPosY: Normalized Y position of tagger",
-            //         "TagVelX: Normalized X velocity of tagger",
-            //         "TagVelY: Normalized Y velocity of tagger",
-            //         "MyPosX×ActionX: Position-action cross feature",
-            //         "MyPosY×ActionY: Position-action cross feature",
-            //         "MyVelX×ActionX: Velocity-action cross feature",
-            //         "MyVelY×ActionY: Velocity-action cross feature",
-            //         "TagPosX×ActionX: Tagger position-action cross feature",
-            //         "TagPosY×ActionY: Tagger position-action cross feature",
-            //         "TagVelX×ActionX: Tagger velocity-action cross feature",
-            //         "TagVelY×ActionY: Tagger velocity-action cross feature",
-            //         "Bias: Constant term"};
+            // if ((i % 1000) == 0) {
+            //     std::cout << "Episode " << i << " - Testing performance:" << std::endl;
 
-            //     for (size_t j = 0; j < weights.size(); ++j) {
-            //         std::cout << "  Weight[" << j << "] = " << weights[j] << " | Feature: " <<
-            //         feature_descriptions[j]
-            //                   << std::endl;
+            //     // Run 5 test episodes with greedy policy (epsilon=0)
+            //     double total_survival_time = 0;
+            //     const int NUM_TEST_EPISODES = 5;
+            //     double total_reward = 0.0;
+
+            //     for (int test_ep = 0; test_ep < NUM_TEST_EPISODES; test_ep++) {
+            //         State s = this->m_mdp->reset();
+            //         int steps = 0;
+            //         double episode_reward = 0.0;
+
+            //         while (!this->m_mdp->is_terminal(s) && steps < 1000) {
+            //             // Use greedy action selection - get action from greedy_action tuple
+            //             Action a = std::get<0>(this->m_policy->greedy_action(s));
+            //             auto [s_prime, r] = this->m_mdp->step(s, a);
+            //             episode_reward += r;
+            //             s = s_prime;
+            //             steps++;
+            //         }
+
+            //         total_survival_time += steps;
+            //         total_reward += episode_reward;
+            //         std::cout << "  Episode " << test_ep << ": survived " << steps
+            //                   << " steps, reward: " << episode_reward << std::endl;
+            //     }
+
+            //     double avg_survival = total_survival_time / NUM_TEST_EPISODES;
+            //     double avg_reward = total_reward / NUM_TEST_EPISODES;
+            //     std::cout << "Average survival time: " << avg_survival << " steps, Average reward: " << avg_reward
+            //               << std::endl;
+            //     std::cout << "------------------------------" << std::endl;
+
+            //     // Display top feature weights (useful for understanding what the network learns)
+            //     const auto& weights = m_value_strategy->get_approximator()->get_weights();
+            //     std::cout << "Feature weights sample (first 10 weights):" << std::endl;
+            //     for (size_t j = 0; j < std::min(size_t(10), weights.size()); ++j) {
+            //         std::cout << "  Weight[" << j << "] = " << weights[j] << std::endl;
             //     }
             //     std::cout << "------------------------------" << std::endl;
             // }
+
             i++;
             State s = this->m_mdp->reset();
             Action a = this->m_policy->sample(s);

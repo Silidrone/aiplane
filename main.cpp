@@ -1,4 +1,4 @@
-#include "taggame/fa_td_solution.h"
+#include "taggame/ann_sarsa.h"
 
 int main() {
     taggame_main();
