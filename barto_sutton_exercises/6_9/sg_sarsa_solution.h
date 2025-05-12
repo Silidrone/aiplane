@@ -5,9 +5,9 @@
 #include <functional>
 #include <iostream>
 
-#include "FA_TD.h"
 #include "FunctionApproximator.h"
 #include "Policy.h"
+#include "SG_SARSA.h"
 #include "ValueStrategy.h"
 #include "WindyGridworld.h"
 #include "serialization.h"
@@ -53,7 +53,7 @@ inline int windygridworld_main() {
 
     EpsilonGreedyPolicy<State, Action> policy(&value_strategy, EPSILON);
 
-    FA_TD<State, Action> mdp_solver(&environment, &policy, &value_strategy, DISCOUNT_RATE, N_OF_EPISODES, ALPHA);
+    SG_SARSA<State, Action> mdp_solver(&environment, &policy, &value_strategy, DISCOUNT_RATE, N_OF_EPISODES, ALPHA);
 
     double time_taken = benchmark([&]() { mdp_solver.policy_iteration(); });
 

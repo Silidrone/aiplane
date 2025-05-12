@@ -1,6 +1,6 @@
-#include "taggame/ann_sarsa.h"
+#include "barto_sutton_exercises/6_9/sarsa_torch_solution.h"
 
 int main() {
-    taggame_main();
+    windygridworld_main();
     return 0;
 }

@@ -31,13 +31,14 @@ class WindyGridworld : public MDP<State, Action> {
 
         return {new_row, next_state.second};
     }
+
+   public:
     bool is_valid(const State &s, const Action &a) const override {
         State next_state = walk(s, a);
         return next_state.first >= 0 && next_state.first < ROW_COUNT && next_state.second >= 0 &&
                next_state.second < COL_COUNT;
     };
 
-   public:
     void initialize() override;
     bool is_terminal(const State &s) override;
     State reset() override;

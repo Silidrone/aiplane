@@ -9,10 +9,10 @@
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-#include "FA_TD.h"
 #include "FunctionApproximator.h"
 #include "MDPSolver.h"
 #include "Policy.h"
+#include "SG_SARSA.h"
 #include "ValueStrategy.h"
 #include "m_utils.h"
 #include "serialization.h"
@@ -23,7 +23,7 @@ static constexpr long double N_OF_EPISODES = 1000000;  // Reduced for faster ite
 static constexpr double POLICY_EPSILON = 0.1;          // Increased for better exploration
 static constexpr double TD_ALPHA = 0.05;               // Adjusted learning rate
 static const std::string WEIGHTS_FILE = "taggame_fa_weights.json";
-static const std::string POLICY_FILE = "fa_td_taggame_optimal_policy.json";
+static const std::string POLICY_FILE = "sg_sarsa_taggame_optimal_policy.json";
 
 inline int taggame_main() {
     TagGame environment;
@@ -71,7 +71,7 @@ inline int taggame_main() {
         features.push_back(distance_to_tagger);
 
         double corners[4][2] = {{0, 0}, {0, 1}, {1, 0}, {1, 1}};
-        double min_corner_dist = 2.0; 
+        double min_corner_dist = 2.0;
 
         for (int i = 0; i < 4; i++) {
             double corner_dist =
@@ -211,7 +211,7 @@ inline int taggame_main() {
 
     // Use the hybrid policy with 20% demonstrations to guide learning
     HybridPolicy policy(value_strategy, POLICY_EPSILON, 0.2);
-    FA_TD<State, Action> mdp_solver(&environment, &policy, value_strategy, DISCOUNT_RATE, N_OF_EPISODES, TD_ALPHA);
+    SG_SARSA<State, Action> mdp_solver(&environment, &policy, value_strategy, DISCOUNT_RATE, N_OF_EPISODES, TD_ALPHA);
 
     try {
         std::cout << "Starting policy iteration with neural network..." << std::endl;

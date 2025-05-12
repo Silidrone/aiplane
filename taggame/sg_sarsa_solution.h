@@ -9,10 +9,10 @@
 #include <iostream>
 #include <nlohmann/json.hpp>
 
-#include "FA_TD.h"
 #include "FunctionApproximator.h"
 #include "MDPSolver.h"
 #include "Policy.h"
+#include "SG_SARSA.h"
 #include "ValueStrategy.h"
 #include "m_utils.h"
 #include "serialization.h"
@@ -23,7 +23,7 @@ static constexpr long double N_OF_EPISODES = 50000000;
 static constexpr double POLICY_EPSILON = 0.15;
 static constexpr double TD_ALPHA = 0.001;
 static const std::string WEIGHTS_FILE = "taggame_fa_weights.json";
-static const std::string POLICY_FILE = "fa_td_taggame_optimal_policy.json";
+static const std::string POLICY_FILE = "sg_sarsa_taggame_optimal_policy.json";
 
 inline int taggame_main() {
     TagGame environment;
@@ -56,22 +56,14 @@ inline int taggame_main() {
         features.push_back(norm_tag_pos_y);
         features.push_back(norm_tag_vel_x);
         features.push_back(norm_tag_vel_y);
-
-        features.push_back(norm_my_pos_x * norm_action_x);
-        features.push_back(norm_my_pos_y * norm_action_y);
-        features.push_back(norm_my_vel_x * norm_action_x);
-        features.push_back(norm_my_vel_y * norm_action_y);
-        features.push_back(norm_tag_pos_x * norm_action_x);
-        features.push_back(norm_tag_pos_y * norm_action_y);
-        features.push_back(norm_tag_vel_x * norm_action_x);
-        features.push_back(norm_tag_vel_y * norm_action_y);
-
+        features.push_back(norm_action_x);
+        features.push_back(norm_action_y);
         features.push_back(1.0);
 
         return features;
     };
 
-    int feature_dim = 17;
+    int feature_dim = 11;
     auto approximator = new LinearFunctionApproximator<State, Action>(feature_dim, feature_extractor);
 
     auto value_strategy = new ApproximationValueStrategy<State, Action>();
@@ -88,7 +80,7 @@ inline int taggame_main() {
     }
 
     EpsilonGreedyPolicy<State, Action> policy(value_strategy, POLICY_EPSILON);
-    FA_TD<State, Action> mdp_solver(&environment, &policy, value_strategy, DISCOUNT_RATE, N_OF_EPISODES, TD_ALPHA);
+    SG_SARSA<State, Action> mdp_solver(&environment, &policy, value_strategy, DISCOUNT_RATE, N_OF_EPISODES, TD_ALPHA);
 
     try {
         std::cout << "Starting policy iteration..." << std::endl;

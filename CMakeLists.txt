@@ -7,6 +7,11 @@ set(CMAKE_BUILD_TYPE Debug)
 set(CMAKE_CXX_FLAGS_DEBUG "-g -O0")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+# Add LibTorch
+set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} "${CMAKE_SOURCE_DIR}/libtorch")
+find_package(Torch REQUIRED)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
+
 add_subdirectory(matplotplusplus)
 
 include_directories(
@@ -48,4 +53,9 @@ target_link_libraries(output_executable PUBLIC
     matplot 
     nlohmann_json::nlohmann_json 
     ${PYTHON_LIBRARIES}
+    ${TORCH_LIBRARIES}
 )
+
+# Make sure the executable finds the Torch libraries at runtime
+set_property(TARGET output_executable PROPERTY CXX_STANDARD 17)
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
