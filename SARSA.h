@@ -17,49 +17,47 @@ class SARSA : public GPI<State, Action> {
    protected:
     ValueStrategy<State, Action>* m_value_strategy;
 
-    // Optional experience replay
-    bool use_replay_buffer;
-    ReplayBuffer<State, Action> replay_buffer;
-    int batch_size;
-
     // Whether we decay epsilon
     bool decay_epsilon;
 
-   public:
-    SARSA(MDP<State, Action>* mdp_core, Policy<State, Action>* policy, ValueStrategy<State, Action>* value_strategy,
-          const double discount_rate, const long double policy_threshold, bool decay_eps = false,
-          bool use_experience_replay = false, int buffer_capacity = 10000, int batch = 32)
-        : GPI<State, Action>(mdp_core, policy, discount_rate, policy_threshold),
-          m_value_strategy(value_strategy),
-          decay_epsilon(decay_eps),
-          use_replay_buffer(use_experience_replay),
-          replay_buffer(buffer_capacity),
-          batch_size(batch) {
-        policy->initialize(mdp_core, value_strategy);
-    };
+    int print_freq = 100;  // Default: time every 10th episode
 
-    void update_from_batch() {
-        if (replay_buffer.size() < batch_size) {
-            return;
-        }
-
-        auto batch = replay_buffer.sample(batch_size);
-
-        for (const auto& experience : batch) {
-            const auto& [state, action, reward, next_state, done] = experience;
-
-            double target_q;
-            if (done) {
-                target_q = reward;
-            } else {
-                Action next_action = this->m_policy->sample(next_state);
-                double q_next = m_value_strategy->Q(next_state, next_action);
-                target_q = reward + this->m_discount_rate * q_next;
-            }
-
-            m_value_strategy->update(state, action, target_q);
+    // Wrapper to time the update operation
+    void timed_update(const State& s, const Action& a, double target_q, int current_episode = 0) {
+        if (current_episode % print_freq == 0) {
+            auto start = std::chrono::high_resolution_clock::now();
+            m_value_strategy->update(s, a, target_q);
+            auto end = std::chrono::high_resolution_clock::now();
+            std::chrono::duration<double, std::milli> duration = end - start;
+            std::cout << "Episode " << current_episode << " - Update time: " << duration.count() << " ms" << std::endl;
+        } else {
+            m_value_strategy->update(s, a, target_q);
         }
     }
+
+    // Wrapper to time the Q operation
+    double timed_Q(const State& s, const Action& a, int current_episode = 0) {
+        if (current_episode % print_freq == 0) {
+            auto start = std::chrono::high_resolution_clock::now();
+            double q_value = m_value_strategy->Q(s, a);
+            auto end = std::chrono::high_resolution_clock::now();
+            std::chrono::duration<double, std::milli> duration = end - start;
+            std::cout << "Episode " << current_episode << " - Q lookup time: " << duration.count() << " ms"
+                      << std::endl;
+            return q_value;
+        } else {
+            return m_value_strategy->Q(s, a);
+        }
+    }
+
+   public:
+    SARSA(MDP<State, Action>* mdp_core, Policy<State, Action>* policy, ValueStrategy<State, Action>* value_strategy,
+          const double discount_rate, const long double policy_threshold, bool decay_eps = false)
+        : GPI<State, Action>(mdp_core, policy, discount_rate, policy_threshold),
+          m_value_strategy(value_strategy),
+          decay_epsilon(decay_eps) {
+        policy->initialize(mdp_core, value_strategy);
+    };
 
     void sarsa_main() {
         int episode = 0;
@@ -68,14 +66,6 @@ class SARSA : public GPI<State, Action> {
         std::cout << "Starting SARSA training..." << std::endl;
 
         do {  // episode loop
-            if (episode % 10 == 0) {
-                std::cout << "Episode " << episode;
-                if (eps_policy) {
-                    std::cout << " - Epsilon: " << eps_policy->get_epsilon();
-                }
-                std::cout << std::endl;
-            }
-
             episode++;
             State s = this->m_mdp->reset();
             Action a = this->m_policy->sample(s);
@@ -90,20 +80,17 @@ class SARSA : public GPI<State, Action> {
                 bool done = this->m_mdp->is_terminal(s_prime);
                 Action a_prime = done ? a : this->m_policy->sample(s_prime);
 
-                if (use_replay_buffer) {
-                    replay_buffer.add(s, a, r, s_prime, done);
-                    update_from_batch();
+                double target_q;
+                if (done) {
+                    target_q = r;
                 } else {
-                    double target_q;
-                    if (done) {
-                        target_q = r;
-                    } else {
-                        double q_next = m_value_strategy->Q(s_prime, a_prime);
-                        target_q = r + this->m_discount_rate * q_next;
-                    }
-
-                    m_value_strategy->update(s, a, target_q);
+                    //                    double q_next = timed_Q(s_prime, a_prime, episode);
+                    double q_next = m_value_strategy->Q(s_prime, a_prime);
+                    target_q = r + this->m_discount_rate * q_next;
                 }
+
+                // m_value_strategy->update(s, a, target_q, episode);
+                m_value_strategy->update(s, a, target_q);
 
                 s = s_prime;
                 a = a_prime;
@@ -117,7 +104,7 @@ class SARSA : public GPI<State, Action> {
                 }
             };
 
-            if (episode % 10 == 0) {
+            if (episode % print_freq == 0) {
                 std::cout << "Episode " << episode << " - Steps: " << steps << " - Reward: " << episode_reward
                           << std::endl;
             }
