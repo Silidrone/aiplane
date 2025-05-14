@@ -7,7 +7,7 @@
 
 #include "FunctionApproximator.h"
 #include "Policy.h"
-#include "SG_SARSA.h"
+#include "SARSA.h"
 #include "ValueStrategy.h"
 #include "WindyGridworld.h"
 #include "serialization.h"
@@ -21,14 +21,11 @@ inline int windygridworld_main() {
     WindyGridworld environment;
     environment.initialize();
 
-    // Feature extractor for state-action pairs
     std::function<std::vector<double>(const State&, const Action&)> feature_extractor = [](const State& s,
                                                                                            const Action& a) {
-        // Create features for all state-action combinations
         int total_actions = possible_actions.size();
         std::vector<double> features(ROW_COUNT * COL_COUNT * total_actions, 0.0);
 
-        // Find action index
         int action_idx = 0;
         for (size_t i = 0; i < possible_actions.size(); i++) {
             if (possible_actions[i] == a) {
@@ -37,7 +34,6 @@ inline int windygridworld_main() {
             }
         }
 
-        // Set the feature for this specific state-action pair
         int index = (s.first * COL_COUNT + s.second) * total_actions + action_idx;
         features[index] = 1.0;
         return features;
@@ -53,7 +49,7 @@ inline int windygridworld_main() {
 
     EpsilonGreedyPolicy<State, Action> policy(&value_strategy, EPSILON);
 
-    SG_SARSA<State, Action> mdp_solver(&environment, &policy, &value_strategy, DISCOUNT_RATE, N_OF_EPISODES, ALPHA);
+    SARSA<State, Action> mdp_solver(&environment, &policy, &value_strategy, DISCOUNT_RATE, N_OF_EPISODES, ALPHA);
 
     double time_taken = benchmark([&]() { mdp_solver.policy_iteration(); });
 

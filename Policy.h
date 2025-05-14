@@ -82,12 +82,25 @@ class EpsilonGreedyPolicy : public Policy<State, Action> {
    private:
     double m_epsilon;
     std::mt19937 m_generator;
+    double m_min_epsilon;  // Minimum epsilon value for decay
+    double m_epsilon_decay;
 
    public:
-    EpsilonGreedyPolicy(ValueStrategy<State, Action>* value_strategy, double epsilon)
-        : Policy<State, Action>(value_strategy), m_epsilon(epsilon), m_generator(std::random_device{}()) {
+    EpsilonGreedyPolicy(ValueStrategy<State, Action>* value_strategy, double epsilon, double min_epsilon = 0.01,
+                        double epsilon_decay = 1.0)
+        : Policy<State, Action>(value_strategy),
+          m_epsilon(epsilon),
+          m_generator(std::random_device{}()),
+          m_min_epsilon(min_epsilon),
+          m_epsilon_decay(epsilon_decay) {
         if (epsilon < 0.0 || epsilon > 1.0) {
             throw std::invalid_argument("Epsilon must be between 0 and 1");
+        }
+        if (min_epsilon < 0.0 || min_epsilon > epsilon) {
+            throw std::invalid_argument("Min epsilon must be between 0 and epsilon");
+        }
+        if (epsilon_decay <= 0.0 || epsilon_decay > 1.0) {
+            throw std::invalid_argument("Epsilon decay must be between 0 and 1");
         }
     }
 
@@ -104,4 +117,34 @@ class EpsilonGreedyPolicy : public Policy<State, Action> {
             return std::get<0>(this->greedy_action(s));
         }
     }
+
+    double get_epsilon() const { return m_epsilon; }
+
+    void set_epsilon(double epsilon) {
+        if (epsilon < 0.0 || epsilon > 1.0) {
+            throw std::invalid_argument("Epsilon must be between 0 and 1");
+        }
+        m_epsilon = epsilon;
+    }
+
+    double get_min_epsilon() const { return m_min_epsilon; }
+
+    void set_min_epsilon(double min_epsilon) {
+        if (min_epsilon < 0.0 || min_epsilon > 1.0) {
+            throw std::invalid_argument("Min epsilon must be between 0 and 1");
+        }
+        m_min_epsilon = min_epsilon;
+    }
+
+    double get_epsilon_decay() const { return m_epsilon_decay; }
+
+    void set_epsilon_decay(double epsilon_decay) {
+        if (epsilon_decay <= 0.0 || epsilon_decay > 1.0) {
+            throw std::invalid_argument("Epsilon decay must be between 0 and 1");
+        }
+        m_epsilon_decay = epsilon_decay;
+    }
+
+    // Decay epsilon (call this after each episode)
+    void decay_epsilon() { m_epsilon = std::max(m_min_epsilon, m_epsilon * m_epsilon_decay); }
 };

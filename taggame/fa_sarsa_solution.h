@@ -12,7 +12,7 @@
 #include "FunctionApproximator.h"
 #include "MDPSolver.h"
 #include "Policy.h"
-#include "SG_SARSA.h"
+#include "SARSA.h"
 #include "ValueStrategy.h"
 #include "m_utils.h"
 #include "serialization.h"
@@ -23,7 +23,7 @@ static constexpr long double N_OF_EPISODES = 50000000;
 static constexpr double POLICY_EPSILON = 0.15;
 static constexpr double TD_ALPHA = 0.001;
 static const std::string WEIGHTS_FILE = "taggame_fa_weights.json";
-static const std::string POLICY_FILE = "sg_sarsa_taggame_optimal_policy.json";
+static const std::string POLICY_FILE = "sarsa_taggame_optimal_policy.json";
 
 inline int taggame_main() {
     TagGame environment;
@@ -80,7 +80,7 @@ inline int taggame_main() {
     }
 
     EpsilonGreedyPolicy<State, Action> policy(value_strategy, POLICY_EPSILON);
-    SG_SARSA<State, Action> mdp_solver(&environment, &policy, value_strategy, DISCOUNT_RATE, N_OF_EPISODES, TD_ALPHA);
+    SARSA<State, Action> mdp_solver(&environment, &policy, value_strategy, DISCOUNT_RATE, N_OF_EPISODES, TD_ALPHA);
 
     try {
         std::cout << "Starting policy iteration..." << std::endl;
