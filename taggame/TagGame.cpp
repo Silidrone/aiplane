@@ -68,47 +68,10 @@ Reward TagGame::calculate_reward(const State& old_s, const State& new_s) {
     auto [new_my_pos, new_my_vel, new_tag_pos, new_tag_vel, new_is_tagged] = new_s;
 
     if (new_is_tagged) {
-        return -10.0;
+        return -1.0;
     }
 
-    double old_distance = std::sqrt(std::pow(old_my_pos.first - old_tag_pos.first, 2) +
-                                    std::pow(old_my_pos.second - old_tag_pos.second, 2)) /
-                          MAX_DISTANCE;
-
-    double new_distance = std::sqrt(std::pow(new_my_pos.first - new_tag_pos.first, 2) +
-                                    std::pow(new_my_pos.second - new_tag_pos.second, 2)) /
-                          MAX_DISTANCE;
-
-    double distance_reward = 0.5 * (new_distance - old_distance);
-
-    std::vector<std::pair<int, int>> corners = {
-        {0, 0},                                             // Bottom left
-        {0, static_cast<int>(MAX_Y)},                       // Top left
-        {static_cast<int>(MAX_X), 0},                       // Bottom right
-        {static_cast<int>(MAX_X), static_cast<int>(MAX_Y)}  // Top right
-    };
-
-    double min_old_corner_dist = MAX_DISTANCE;
-    double min_new_corner_dist = MAX_DISTANCE;
-
-    for (const auto& corner : corners) {
-        double old_corner_dist =
-            std::sqrt(std::pow(old_my_pos.first - corner.first, 2) + std::pow(old_my_pos.second - corner.second, 2));
-        min_old_corner_dist = std::min(min_old_corner_dist, old_corner_dist);
-
-        double new_corner_dist =
-            std::sqrt(std::pow(new_my_pos.first - corner.first, 2) + std::pow(new_my_pos.second - corner.second, 2));
-        min_new_corner_dist = std::min(min_new_corner_dist, new_corner_dist);
-    }
-
-    min_old_corner_dist /= MAX_DISTANCE;
-    min_new_corner_dist /= MAX_DISTANCE;
-
-    double corner_reward = 0.3 * (min_new_corner_dist - min_old_corner_dist);
-
-    double survival_reward = 0.01;
-
-    return distance_reward + corner_reward + survival_reward;
+    return 0.01;
 }
 State TagGame::reset() {
     m_communicator.sendAction(m_communicator.RESET);
