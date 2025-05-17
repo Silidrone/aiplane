@@ -1,0 +1,21 @@
+import math
+
+MAX_VELOCITY = 10.0
+MAX_X = 1000.0
+MAX_Y = 1000.0
+MAX_DISTANCE = math.sqrt(MAX_X * MAX_X + MAX_Y * MAX_Y)
+
+TAGGAME_HOST = "127.0.0.1"
+TAGGAME_PORT = 12345
+
+OUTPUT_DIR = "output/"
+MODEL_FILE = "taggame_torch_model.pt"
+POLICY_FILE = "taggame_torch_optimal_policy.json"
+
+DISCOUNT_RATE = 1.0
+N_OF_EPISODES = 50000000
+POLICY_EPSILON = 0.15
+MIN_EPSILON = 0.01
+DECAY_RATE = 0.9999
+LEARNING_RATE = 0.001
+HIDDEN_SIZE = 64

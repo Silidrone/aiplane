@@ -1,0 +1,14 @@
+GRID_WIDTH = 10
+GRID_HEIGHT = 7
+DISCOUNT_RATE = 0.95
+LEARNING_RATE = 0.001
+POLICY_EPSILON = 0.1
+MIN_EPSILON = 0.01
+DECAY_RATE = 0.999
+WIND_STRENGTH = [0, 0, 0, 1, 1, 1, 2, 2, 1, 0]
+N_OF_EPISODES = 800
+START_STATE = (3, 0)
+GOAL_STATE = (3, 7)
+OUTPUT_DIR = "output/windy_grid_world"
+POLICY_FILE = "windy_grid_policy.pt"
+VALUE_FILE = "windy_grid_model.pt"
