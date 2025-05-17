@@ -25,7 +25,8 @@ class TagGameQNet(TorchModel):
 
 
 def feature_extractor(state: TagGameState, action: TagGameAction, device=None) -> torch.Tensor:
-    device = torch.device("cpu")  # Force CPU for stability
+    if device is None:
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         
     my_pos, my_vel, tag_pos, tag_vel, is_tagged = state
     action_x, action_y = action

@@ -1,14 +1,9 @@
 import json
-import math
-from typing import Dict, List, Optional, Tuple
+from typing import List, Tuple
 
-import numpy as np
-import torch
-
-from mdp import MDP, Action, Reward, State
-from policy import DeterministicPolicy
+from mdp import MDP, Reward
 from environments.taggame.communicator import Communicator
-from environments.taggame.taggame_constants import MAX_DISTANCE, MAX_VELOCITY, MAX_X, MAX_Y, TAGGAME_HOST, TAGGAME_PORT
+from environments.taggame.taggame_constants import MAX_VELOCITY, TAGGAME_HOST, TAGGAME_PORT
 
 Position = Tuple[int, int]
 Velocity = Tuple[int, int]
@@ -85,6 +80,3 @@ class TagGame(MDP[TagGameState, TagGameAction]):
     
     def all_possible_actions(self) -> List[TagGameAction]:
         return self._all_actions
-    
-    def plot_policy(self, policy: DeterministicPolicy[TagGameState, TagGameAction]) -> None:
-        print("Policy visualization is not implemented in the Python version")

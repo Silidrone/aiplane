@@ -37,8 +37,8 @@ def train_taggame() -> None:
         print("Make sure the TagGame Java application is running.")
         sys.exit(1)
     
-    device = torch.device("cpu")
-    print("Using device: CPU (CUDA disabled for stability)")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print(f"Using device: {device}")
     
     FEATURE_SIZE = 13
     model = TagGameQNet(FEATURE_SIZE, HIDDEN_SIZE)

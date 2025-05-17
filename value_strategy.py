@@ -196,10 +196,12 @@ class TorchValueStrategy(ValueStrategy[State, Action]):
     def __init__(self, network: TorchModel, 
                  feature_extractor: Callable[[State, Action], torch.Tensor],
                  step_size: float = 0.01):
-        self.device = torch.device("cpu")  # Force CPU for stability
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        print(f"TorchValueStrategy initialized with device: {self.device}")
         
         self.q_network = network
         self.feature_extractor = feature_extractor
+        # Ensure model is on the correct device
         self.q_network.to(self.device)
         self.optimizer = optim.Adam(network.parameters(), lr=step_size)
         self._mdp = None
@@ -227,12 +229,20 @@ class TorchValueStrategy(ValueStrategy[State, Action]):
     def Q(self, state: State, action: Action) -> float:
         with torch.no_grad():
             state_action = self.feature_extractor(state, action, device=self.device)
+            # Ensure the model and input tensor are on the same device
+            if state_action.device != next(self.q_network.parameters()).device:
+                state_action = state_action.to(next(self.q_network.parameters()).device)
             return self.q_network(state_action).item()
     
     def update(self, state: State, action: Action, target_q: float) -> None:
         state_action = self.feature_extractor(state, action, device=self.device)
+        # Ensure the model and input tensor are on the same device
+        model_device = next(self.q_network.parameters()).device
+        if state_action.device != model_device:
+            state_action = state_action.to(model_device)
+        
         current_q = self.q_network(state_action)
-        target = torch.tensor([[target_q]], dtype=current_q.dtype, device=self.device)
+        target = torch.tensor([[target_q]], dtype=current_q.dtype, device=model_device)
         
         loss = nn.functional.mse_loss(current_q, target)
         

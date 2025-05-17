@@ -1,11 +1,30 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from typing import Tuple
+from typing import Tuple, Optional
 
 from torch_model import TorchModel
 from environments.windy_grid_world.windy_grid_constants import GRID_HEIGHT, GRID_WIDTH
 from environments.windy_grid_world.windy_grid_world import GridPosition, UP, DOWN, LEFT, RIGHT, ACTIONS
+
+# Global device for feature extraction
+_DEVICE = None
+
+def get_device() -> torch.device:
+    """Get the global device or initialize it if not set."""
+    global _DEVICE
+    if _DEVICE is None:
+        _DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        print(f"Feature extractor using device: {_DEVICE}")
+    return _DEVICE
+
+def set_device(device: Optional[torch.device] = None) -> None:
+    """Set the global device for feature extraction."""
+    global _DEVICE
+    if device is None:
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    _DEVICE = device
+    print(f"Feature extractor device set to: {_DEVICE}")
 
 class WindyGridWorldQNet(TorchModel):
     def __init__(self, input_size: int, hidden_size: int = 32):
@@ -21,7 +40,8 @@ class WindyGridWorldQNet(TorchModel):
         return self.output(x)
 
 def feature_extractor(state: GridPosition, action: Tuple[int, int], device=None) -> torch.Tensor:
-    device = torch.device("cpu")
+    if device is None:
+        device = get_device()
     
     row, col = state
     action_idx = ACTIONS.index(action)

@@ -47,28 +47,12 @@ class Policy(Generic[State, Action], ABC):
     def value_strategy(self) -> 'ValueStrategy[State, Action]':
         return self._value_strategy
 
-
-class DeterministicPolicy(Policy[State, Action]):
-    def __init__(self, value_strategy: 'ValueStrategy[State, Action]' = None):
-        super().__init__(value_strategy)
-        self._policy_map: Dict[State, Action] = {}
-    
-    def set(self, state: State, action: Action) -> None:
-        self._policy_map[state] = action
-    
-    def sample(self, state: State) -> Action:
-        if state in self._policy_map:
-            return self._policy_map[state]
-        return self.greedy_action(state)[0]
-
-
 class EpsilonGreedyPolicy(Policy[State, Action]):
     def __init__(self, value_strategy: 'ValueStrategy[State, Action]', epsilon: float,
                  min_epsilon: float = 0.01, epsilon_decay: float = 1.0):
         super().__init__(value_strategy)
-        
         if not 0.0 <= epsilon <= 1.0:
-            raise ValueError("Epsilon must be between 0 and 1")
+            raise ValueError("Epsilon must be between 0 and 1 (inclusive)")
         
         if not 0.0 <= min_epsilon <= epsilon:
             raise ValueError("Min epsilon must be between 0 and epsilon")
@@ -81,7 +65,7 @@ class EpsilonGreedyPolicy(Policy[State, Action]):
         self._epsilon_decay = epsilon_decay
     
     def sample(self, state: State) -> Action:
-        if random.random() < self._epsilon:
+        if self._epsilon > 0 and random.random() < self._epsilon:
             actions = self._mdp.actions(state)
             if not actions:
                 raise RuntimeError(f"No available actions for state {state}")
@@ -96,7 +80,7 @@ class EpsilonGreedyPolicy(Policy[State, Action]):
     @epsilon.setter
     def epsilon(self, epsilon: float) -> None:
         if not 0.0 <= epsilon <= 1.0:
-            raise ValueError("Epsilon must be between 0 and 1")
+            raise ValueError("Epsilon must be between 0 and 1!")
         self._epsilon = epsilon
     
     @property
@@ -105,7 +89,7 @@ class EpsilonGreedyPolicy(Policy[State, Action]):
     
     @min_epsilon.setter
     def min_epsilon(self, min_epsilon: float) -> None:
-        if not 0.0 <= min_epsilon <= 1.0:
+        if not 0.0 < min_epsilon <= 1.0:
             raise ValueError("Min epsilon must be between 0 and 1")
         self._min_epsilon = min_epsilon
     
@@ -121,3 +105,7 @@ class EpsilonGreedyPolicy(Policy[State, Action]):
     
     def decay_epsilon(self) -> None:
         self._epsilon = max(self._min_epsilon, self._epsilon * self._epsilon_decay)
+        
+class GreedyPolicy(EpsilonGreedyPolicy[State, Action]):
+    def __init__(self, value_strategy: 'ValueStrategy[State, Action]'):
+        super().__init__(value_strategy, 0, 0, 1)
