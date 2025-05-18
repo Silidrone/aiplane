@@ -1,6 +1,6 @@
 import random
-from abc import ABC, abstractmethod
-from typing import Dict, Generic, Tuple, TypeVar
+from abc import ABC
+from typing import Dict, Generic, Tuple
 
 from mdp import MDP, Action, State
 
@@ -51,15 +51,6 @@ class EpsilonGreedyPolicy(Policy[State, Action]):
     def __init__(self, value_strategy: 'ValueStrategy[State, Action]', epsilon: float,
                  min_epsilon: float = 0.01, epsilon_decay: float = 1.0):
         super().__init__(value_strategy)
-        if not 0.0 <= epsilon <= 1.0:
-            raise ValueError("Epsilon must be between 0 and 1 (inclusive)")
-        
-        if not 0.0 <= min_epsilon <= epsilon:
-            raise ValueError("Min epsilon must be between 0 and epsilon")
-        
-        if not 0.0 < epsilon_decay <= 1.0:
-            raise ValueError("Epsilon decay must be between 0 and 1")
-        
         self._epsilon = epsilon
         self._min_epsilon = min_epsilon
         self._epsilon_decay = epsilon_decay
@@ -80,7 +71,7 @@ class EpsilonGreedyPolicy(Policy[State, Action]):
     @epsilon.setter
     def epsilon(self, epsilon: float) -> None:
         if not 0.0 <= epsilon <= 1.0:
-            raise ValueError("Epsilon must be between 0 and 1!")
+            raise ValueError("Epsilon must be in range: [0, 1]")
         self._epsilon = epsilon
     
     @property
@@ -89,8 +80,8 @@ class EpsilonGreedyPolicy(Policy[State, Action]):
     
     @min_epsilon.setter
     def min_epsilon(self, min_epsilon: float) -> None:
-        if not 0.0 < min_epsilon <= 1.0:
-            raise ValueError("Min epsilon must be between 0 and 1")
+        if not 0.0 <= min_epsilon <= 1.0:
+            raise ValueError("Min epsilon must be in range: [0, 1]")
         self._min_epsilon = min_epsilon
     
     @property
@@ -99,12 +90,12 @@ class EpsilonGreedyPolicy(Policy[State, Action]):
     
     @epsilon_decay.setter
     def epsilon_decay(self, epsilon_decay: float) -> None:
-        if not 0.0 < epsilon_decay <= 1.0:
-            raise ValueError("Epsilon decay must be between 0 and 1")
+        if not 0.0 <= epsilon_decay < 1.0:
+            raise ValueError("Epsilon decay must be in range: (0, 1]")
         self._epsilon_decay = epsilon_decay
     
     def decay_epsilon(self) -> None:
-        self._epsilon = max(self._min_epsilon, self._epsilon * self._epsilon_decay)
+        self._epsilon = max(self._min_epsilon, self._epsilon * (1 - self._epsilon_decay))
         
 class GreedyPolicy(EpsilonGreedyPolicy[State, Action]):
     def __init__(self, value_strategy: 'ValueStrategy[State, Action]'):
