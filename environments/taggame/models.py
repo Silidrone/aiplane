@@ -2,29 +2,12 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import math
-from typing import Optional
 
 from torch_model import TorchModel
 from environments.taggame.constants import (
     WIDTH, HEIGHT, MAX_VELOCITY, HIDDEN_SIZE
 )
 from environments.taggame.taggame import TagGameState, TagGameAction
-
-_DEVICE = None
-
-def get_device() -> torch.device:
-    global _DEVICE
-    if _DEVICE is None:
-        _DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        print(f"Feature extractor using device: {_DEVICE}")
-    return _DEVICE
-
-def set_device(device: Optional[torch.device] = None) -> None:
-    global _DEVICE
-    if device is None:
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    _DEVICE = device
-    print(f"Feature extractor device set to: {_DEVICE}")
 
 class TagGameQNet(TorchModel):
     def __init__(self, input_size: int, hidden_size: int = HIDDEN_SIZE):
@@ -43,10 +26,7 @@ class TagGameQNet(TorchModel):
         x = F.relu(self.fc2(x))
         return self.output(x)
 
-def feature_extractor(state: TagGameState, action: TagGameAction, device=None) -> torch.Tensor:
-    if device is None:
-        device = get_device()
-    
+def feature_extractor(state: TagGameState, action: TagGameAction, device=torch.device("cpu")) -> torch.Tensor:
     my_pos, my_vel, tag_pos, tag_vel, is_tagged = state
     action_x, action_y = action
     
@@ -91,13 +71,3 @@ def feature_extractor(state: TagGameState, action: TagGameAction, device=None) -
     ]
     
     return torch.tensor([features], dtype=torch.float32, device=device)
-
-def state_to_readable(state: TagGameState) -> str:
-    my_pos, my_vel, tag_pos, tag_vel, is_tagged = state
-    return (
-        f"MyPos: ({my_pos[0]:.1f}, {my_pos[1]:.1f}), "
-        f"MyVel: ({my_vel[0]:.1f}, {my_vel[1]:.1f}), "
-        f"TagPos: ({tag_pos[0]:.1f}, {tag_pos[1]:.1f}), "
-        f"TagVel: ({tag_vel[0]:.1f}, {tag_vel[1]:.1f}), "
-        f"Tagged: {is_tagged}"
-    )

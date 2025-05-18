@@ -1,6 +1,5 @@
-import os
 from abc import ABC, abstractmethod
-from typing import Callable, Dict, Generic, Tuple, TypeVar, Union
+from typing import Callable, Dict, Generic, Tuple
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -195,8 +194,8 @@ class ApproximationValueStrategy(ValueStrategy[State, Action]):
 class TorchValueStrategy(ValueStrategy[State, Action]):
     def __init__(self, network: TorchModel, 
                  feature_extractor: Callable[[State, Action], torch.Tensor],
-                 step_size: float = 0.01):
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+                 step_size: float = 0.01, device = torch.device("cpu")):
+        self.device = device
         print(f"TorchValueStrategy initialized with device: {self.device}")
         
         self.q_network = network
@@ -229,20 +228,13 @@ class TorchValueStrategy(ValueStrategy[State, Action]):
     def Q(self, state: State, action: Action) -> float:
         with torch.no_grad():
             state_action = self.feature_extractor(state, action, device=self.device)
-            # Ensure the model and input tensor are on the same device
-            if state_action.device != next(self.q_network.parameters()).device:
-                state_action = state_action.to(next(self.q_network.parameters()).device)
             return self.q_network(state_action).item()
     
     def update(self, state: State, action: Action, target_q: float) -> None:
         state_action = self.feature_extractor(state, action, device=self.device)
-        # Ensure the model and input tensor are on the same device
-        model_device = next(self.q_network.parameters()).device
-        if state_action.device != model_device:
-            state_action = state_action.to(model_device)
         
         current_q = self.q_network(state_action)
-        target = torch.tensor([[target_q]], dtype=current_q.dtype, device=model_device)
+        target = torch.tensor([[target_q]], dtype=current_q.dtype, device=self.device)
         
         loss = nn.functional.mse_loss(current_q, target)
         

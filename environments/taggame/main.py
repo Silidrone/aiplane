@@ -1,10 +1,8 @@
 import os
 import torch
-import matplotlib.pyplot as plt
 import time
 import pygame
 import argparse
-from datetime import datetime
 
 import sys
 sys.path.append('/home/silidrone/silidev/aiplane_py')  # Add root directory to path
@@ -15,7 +13,7 @@ from constants import (
     N_OF_EPISODES, OUTPUT_DIR, POLICY_EPSILON, MODEL_FILE, HIDDEN_SIZE
 )
 from taggame import TagGame
-from models import TagGameQNet, feature_extractor, set_device, state_to_readable
+from models import TagGameQNet, feature_extractor
 from policy import EpsilonGreedyPolicy
 from value_strategy import TorchValueStrategy
 
@@ -30,14 +28,13 @@ def setup_training():
     
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Using device: {device}")
-    set_device(device)
     
     input_size = 14  # Number of features in feature_extractor
     
     model = TagGameQNet(input_size, HIDDEN_SIZE)
     model.to(device)
     
-    value_strategy = TorchValueStrategy(model, feature_extractor, LEARNING_RATE)
+    value_strategy = TorchValueStrategy(model, feature_extractor, LEARNING_RATE, device)
     value_strategy.initialize(environment)
     
     if os.path.exists(MODEL_PATH):
@@ -72,7 +69,7 @@ def train(mdp_solver, model):
         torch.save(model.state_dict(), MODEL_PATH)
         print(f"Saved model. Training stopped because: {e}")
 
-def evaluate(environment, policy, n_episodes=10):
+def evaluate(environment, policy, n_episodes=100):
     print(f"Evaluating policy for {n_episodes} episodes...")
     
     if hasattr(policy.value_strategy, 'q_network'):
@@ -87,9 +84,7 @@ def evaluate(environment, policy, n_episodes=10):
         total_reward = 0
         steps = 0
         
-        print(f"Episode {i+1} starting state: {state_to_readable(state)}")
-        
-        while not done and steps < 1000:  # Max 1000 steps per episode
+        while not done:
             action, _ = policy.greedy_action(state)
             next_state, reward = environment.step(state, action)
             total_reward += reward
@@ -102,9 +97,6 @@ def evaluate(environment, policy, n_episodes=10):
                     if event.type == pygame.QUIT:
                         pygame.quit()
                         return
-            
-            if environment.render_enabled:
-                pygame.time.delay(50)  # 50ms delay
         
         episode_lengths.append(steps)
         episode_rewards.append(total_reward)
@@ -117,28 +109,6 @@ def evaluate(environment, policy, n_episodes=10):
     print(f"Average Episode Length: {avg_length:.2f} steps")
     print(f"Average Episode Reward: {avg_reward:.2f}")
     
-    plt.figure(figsize=(12, 5))
-    
-    plt.subplot(1, 2, 1)
-    plt.bar(range(1, n_episodes+1), episode_lengths)
-    plt.xlabel('Episode')
-    plt.ylabel('Length (steps)')
-    plt.title('Episode Lengths')
-    
-    plt.subplot(1, 2, 2)
-    plt.bar(range(1, n_episodes+1), episode_rewards)
-    plt.xlabel('Episode')
-    plt.ylabel('Total Reward')
-    plt.title('Episode Rewards')
-    
-    plt.tight_layout()
-    
-    plot_path = os.path.join(OUTPUT_DIR, f"evaluation_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png")
-    plt.savefig(plot_path)
-    print(f"Evaluation plot saved to {plot_path}")
-    
-    plt.show()
-
 def main():
     parser = argparse.ArgumentParser(description='TagGame RL Training')
     parser.add_argument('--mode', type=str, default='train', 

@@ -122,7 +122,7 @@ class TagGame(MDP[TagGameState, TagGameAction]):
             tagger = self.tag_player
             if tagger != rl_player:  # Only set AI behavior for non-RL players
                 tagger.set_steering_behavior(
-                    DumbTagSteering(tagger, self, self.width, self.height, self.max_velocity * 0.8)
+                    DumbTagSteering(tagger, self, self.width, self.height, self.max_velocity)
                 )
                 self._handle_tagging_logic()
         
@@ -148,7 +148,7 @@ class TagGame(MDP[TagGameState, TagGameAction]):
         _, _, _, _, new_is_tagged = new_state
         
         if not old_is_tagged and new_is_tagged:
-            return -1.0
+            return -100.0
         
         return 0.01
         

@@ -17,7 +17,7 @@ class SARSA(MDPSolver[S, A]):
         super().__init__(mdp, policy, discount_rate, policy_threshold)
         self._value_strategy = value_strategy
         self._decay_epsilon = decay_epsilon
-        self._print_freq = 100
+        self._print_freq = 30
         self._logger = EpisodeLogger(self._print_freq)
         
         policy.initialize(mdp, value_strategy)
