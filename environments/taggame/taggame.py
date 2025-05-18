@@ -1,5 +1,5 @@
 import math
-from typing import List, Tuple, Dict, Any
+from typing import List, Tuple
 import time
 import pygame
 import random
@@ -9,7 +9,7 @@ from environments.taggame.static_info import Point2D, StaticInfo, Vector2D
 from environments.taggame.tag_player import TagPlayer
 from mdp import MDP, Reward
 from environments.taggame.constants import (
-    WIDTH, HEIGHT, PLAYER_RADIUS, MAX_VELOCITY, 
+    FRAME_RATE_CAP, WIDTH, HEIGHT, PLAYER_RADIUS, MAX_VELOCITY, 
     TIME_COEFFICIENT, TAG_COOLDOWN_MS, RL_PLAYER_NAME
 )
 
@@ -139,8 +139,8 @@ class TagGame(MDP[TagGameState, TagGameAction]):
         # Render the game if enabled
         if self.render_enabled:
             self._render()
-            self.clock.tick(60)  # Cap at 60 FPS when rendering
-        
+            self.clock.tick(FRAME_RATE_CAP)
+            
         return new_state, reward
     
     def _calculate_reward(self, old_state: TagGameState, new_state: TagGameState) -> Reward:

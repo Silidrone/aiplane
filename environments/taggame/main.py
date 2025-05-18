@@ -19,6 +19,8 @@ from models import TagGameQNet, feature_extractor, set_device, state_to_readable
 from policy import EpsilonGreedyPolicy
 from value_strategy import TorchValueStrategy
 
+MODEL_PATH = os.path.join(OUTPUT_DIR, MODEL_FILE)
+
 def setup_training():
     """Initialize the environment, model, and training components"""
     os.makedirs(OUTPUT_DIR, exist_ok=True)
@@ -38,12 +40,11 @@ def setup_training():
     value_strategy = TorchValueStrategy(model, feature_extractor, LEARNING_RATE)
     value_strategy.initialize(environment)
     
-    model_path = os.path.join(OUTPUT_DIR, MODEL_FILE)
-    if os.path.exists(model_path):
+    if os.path.exists(MODEL_PATH):
         try:
-            model.load_state_dict(torch.load(model_path, map_location=device))
+            model.load_state_dict(torch.load(MODEL_PATH, map_location=device))
             model.to(device)
-            print(f"Successfully loaded model from {model_path}")
+            print(f"Successfully loaded model from {MODEL_PATH}")
         except Exception as e:
             print(f"Could not load model: {e}")
             print("Starting with a new model.")
@@ -64,28 +65,12 @@ def train(mdp_solver, model):
         mdp_solver.policy_iteration()
         
         training_time = time.time() - start_time
-        print(f"Training completed in {training_time:.2f} seconds")
-        
-        model_path = os.path.join(OUTPUT_DIR, MODEL_FILE)
-        try:
-            torch.save(model.state_dict(), model_path)
-            print(f"Successfully saved model to {model_path}")
-        except Exception as e:
-            print(f"Failed to save model: {e}")
-        
-    except KeyboardInterrupt:
-        print("\nTraining interrupted by user.")
-        
-        # Save the model on interruption
-        model_path = os.path.join(OUTPUT_DIR, MODEL_FILE)
-        try:
-            torch.save(model.state_dict(), model_path)
-            print(f"Saved model to {model_path} after interruption")
-        except Exception as e:
-            print(f"Failed to save model: {e}")
-    
+
+        torch.save(model.state_dict(), MODEL_PATH)
+        print(f"Saved model. Training completed in {training_time:.2f} seconds.")
     except Exception as e:
-        print(f"An error occurred during training: {e}")
+        torch.save(model.state_dict(), MODEL_PATH)
+        print(f"Saved model. Training stopped because: {e}")
 
 def evaluate(environment, policy, n_episodes=10):
     print(f"Evaluating policy for {n_episodes} episodes...")
@@ -154,75 +139,28 @@ def evaluate(environment, policy, n_episodes=10):
     
     plt.show()
 
-def run_interactive(environment, policy):
-    """Run the environment with the policy and allow user interaction"""
-    print("Running interactive mode. Press ESC to exit.")
-    
-    state = environment.reset()
-    done = False
-    total_reward = 0
-    steps = 0
-    
-    if not environment.render_enabled:
-        print("Cannot run interactive mode without rendering. Exiting.")
-        return
-    
-    running = True
-    while running:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-            elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
-                    running = False
-                elif event.key == pygame.K_r:
-                    state = environment.reset()
-                    done = False
-                    total_reward = 0
-                    steps = 0
-                    print("Environment reset")
-        
-        if not done:
-            action, _ = policy.greedy_action(state)
-            
-            next_state, reward = environment.step(state, action)
-            total_reward += reward
-            steps += 1
-            
-            print(f"Step {steps}: Action: {action}, Reward: {reward:.4f}, Total: {total_reward:.4f}")
-            
-            state = next_state
-            done = environment.is_terminal(state)
-            
-            if done:
-                print(f"Episode ended after {steps} steps with total reward {total_reward:.4f}")
-                print("Press R to reset or ESC to exit")
-        
-        pygame.time.delay(50)
-    
-    environment.close()
-
 def main():
     parser = argparse.ArgumentParser(description='TagGame RL Training')
     parser.add_argument('--mode', type=str, default='train', 
-                        choices=['train', 'evaluate', 'interactive'],
-                        help='Mode to run: train, evaluate, or interactive')
+                        choices=['train', 'evaluate'],
+                        help='Mode to run: train or evaluate')
     parser.add_argument('--episodes', type=int, default=10,
                         help='Number of episodes for evaluation')
                         
     args = parser.parse_args()
     
     environment, model, value_strategy, policy, mdp_solver = setup_training()
-    
-    if args.mode == 'train':
-        train(mdp_solver, model)
-    elif args.mode == 'evaluate':
-        evaluate(environment, policy, args.episodes)
-    elif args.mode == 'interactive':
-        run_interactive(environment, policy)
-    
-    if environment.render_enabled:
-        environment.close()
+    try:
+        if args.mode == 'train':
+            train(mdp_solver, model)
+        elif args.mode == 'evaluate':
+            evaluate(environment, policy, args.episodes)
+        
+        if environment.render_enabled:
+            environment.close()
+    except Exception as e:
+        print(f"Stopped: {e}")
+
 
 if __name__ == "__main__":
     main()
