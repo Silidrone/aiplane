@@ -8,12 +8,12 @@ import sys
 sys.path.append('/home/silidrone/silidev/aiplane_py')  # Add root directory to path
 
 from sarsa import SARSA
-from constants import (
+from environments.taggame.constants import (
     DECAY_RATE, DISCOUNT_RATE, ENABLE_RENDERING, LEARNING_RATE, MIN_EPSILON,
     N_OF_EPISODES, OUTPUT_DIR, POLICY_EPSILON, MODEL_FILE, HIDDEN_SIZE
 )
-from taggame import TagGame
-from models import TagGameQNet, feature_extractor
+from environments.taggame.taggame import TagGame
+from environments.taggame.models import TagGameQNet, feature_extractor
 from policy import EpsilonGreedyPolicy
 from value_strategy import TorchValueStrategy
 
