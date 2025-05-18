@@ -9,12 +9,12 @@ from typing import Dict, Optional
 import torch
 
 from sarsa import SARSA
-from environments.taggame.taggame_constants import (DECAY_RATE, DISCOUNT_RATE, HIDDEN_SIZE,
+from environments.taggame.constants import (DECAY_RATE, DISCOUNT_RATE, HIDDEN_SIZE,
                              LEARNING_RATE, MIN_EPSILON,
                              MODEL_FILE, N_OF_EPISODES,
                              OUTPUT_DIR, POLICY_EPSILON,
                              POLICY_FILE)
-from environments.taggame.taggame_models import TagGameQNet, feature_extractor
+from environments.taggame.models import TagGameQNet, feature_extractor
 from environments.taggame.tag_game import TagGame
 from policy import EpsilonGreedyPolicy
 from value_strategy import TorchValueStrategy

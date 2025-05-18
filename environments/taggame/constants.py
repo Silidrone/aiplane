@@ -1,0 +1,24 @@
+WIDTH = 1000
+HEIGHT = 1000
+ENABLE_RENDERING = False
+TIME_COEFFICIENT = 1.0
+MAX_VELOCITY = 1
+
+PLAYER_RADIUS = 20
+
+TAG_COOLDOWN_MS = 10  # Time after being tagged when AI doesn't chase
+
+DISCOUNT_RATE = 0.99
+N_OF_EPISODES = 5000
+POLICY_EPSILON = 0.3
+MIN_EPSILON = 0.01
+DECAY_RATE = 0.999
+LEARNING_RATE = 0.001
+HIDDEN_SIZE = 64
+
+OUTPUT_DIR = "output/taggame"
+MODEL_FILE = "taggame_model.pt"
+POLICY_FILE = "taggame_policy.json"
+
+PLAYER_COUNT = 2
+RL_PLAYER_NAME = "Sili"
