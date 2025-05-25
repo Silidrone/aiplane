@@ -98,7 +98,6 @@ class PythonInterface(EasyPython):
         try:
             self.add_debug_message("RESET: Direct quaternion method...")
             
-            # Calculate quaternion for 160° heading, -3° pitch, 0° roll
             heading_deg = 160.0
             pitch_deg = -3.0
             roll_deg = 0.0
@@ -107,7 +106,6 @@ class PythonInterface(EasyPython):
             pitch_rad = math.radians(pitch_deg)
             roll_rad = math.radians(roll_deg)
             
-            # Convert to quaternion
             psi_half = heading_rad / 2
             theta_half = pitch_rad / 2  
             phi_half = roll_rad / 2
@@ -117,11 +115,9 @@ class PythonInterface(EasyPython):
             q2 = math.cos(psi_half) * math.sin(theta_half) * math.cos(phi_half) + math.sin(psi_half) * math.cos(theta_half) * math.sin(phi_half)
             q3 = -math.cos(psi_half) * math.sin(theta_half) * math.sin(phi_half) + math.sin(psi_half) * math.cos(theta_half) * math.cos(phi_half)
             
-            # Set quaternion directly
             q_ref = xp.findDataRef("sim/flightmodel/position/q")
             xp.setDatavf(q_ref, [q0, q1, q2, q3], 0, 4)
             
-            # Set position using WorldToLocal
             target_lat = 38.3347
             target_lon = 27.1583 
             target_alt = 1500
@@ -131,25 +127,13 @@ class PythonInterface(EasyPython):
             xp.setDataf(xp.findDataRef("sim/flightmodel/position/local_y"), local_y)
             xp.setDataf(xp.findDataRef("sim/flightmodel/position/local_z"), local_z)
             
-            # Set velocity
-            approach_speed_ms = 65 * 0.514444
-            vel_x = approach_speed_ms * math.sin(heading_rad)
-            vel_z = approach_speed_ms * math.cos(heading_rad)  
-            vel_y = -2.5
+            xp.setDataf(xp.findDataRef("sim/flightmodel/position/local_vx"), 0)
+            xp.setDataf(xp.findDataRef("sim/flightmodel/position/local_vy"), 0)
+            xp.setDataf(xp.findDataRef("sim/flightmodel/position/local_vz"), 0)
             
-            xp.setDataf(xp.findDataRef("sim/flightmodel/position/local_vx"), vel_x)
-            xp.setDataf(xp.findDataRef("sim/flightmodel/position/local_vy"), vel_y)
-            xp.setDataf(xp.findDataRef("sim/flightmodel/position/local_vz"), vel_z)
-            
-            # Zero angular rates
             xp.setDataf(xp.findDataRef("sim/flightmodel/position/P"), 0.0)
             xp.setDataf(xp.findDataRef("sim/flightmodel/position/Q"), 0.0)
             xp.setDataf(xp.findDataRef("sim/flightmodel/position/R"), 0.0)
-            
-            # Aircraft config
-            xp.setDataf(xp.findDataRef("sim/cockpit2/controls/flap_ratio"), 1.0)
-            xp.setDataf(xp.findDataRef("sim/cockpit2/engine/actuators/throttle_ratio_all"), 0.4)
-            xp.setDataf(xp.findDataRef("sim/cockpit2/engine/actuators/mixture_ratio_all"), 1.0)
             
             self.episode_count += 1
             self.add_debug_message(f"RESET: Complete - Episode #{self.episode_count}!")
