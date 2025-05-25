@@ -20,13 +20,14 @@ class PythonInterface(EasyPython):
         self.last_clear_time = time.time()
 
     def onStart(self):
-        self.add_debug_message("=== EASYPYTHON STARTING ===")
         self.create_display_window()
-        self.add_debug_message("EasyPython plugin started!")
 
     def after_physics(self):
         try:
             current_time = time.time()
+            
+            # Print current state every frame
+            self.read_current_state()
             
             # Clear debug messages every 10 seconds
             if current_time - self.last_clear_time >= 10.0:
@@ -43,7 +44,6 @@ class PythonInterface(EasyPython):
     def clear_debug_messages(self):
         self.debug_messages = []
         current_time = time.time()
-        self.add_debug_message(f"--- Debug cleared at {current_time:.0f} ---")
         self.last_clear_time = current_time
 
     def create_display_window(self):
@@ -68,11 +68,8 @@ class PythonInterface(EasyPython):
             color = (1.0, 1.0, 1.0)
             y_pos = top - 15
             
-            xp.drawString(color, left + 5, y_pos, "EasyPython - LTBJ Landing RL", 0, xp.Font_Basic)
+            xp.drawString(color, left + 5, y_pos, f"Episodes: {self.episode_count}", 0, xp.Font_Basic)
             y_pos -= 20
-            
-            xp.drawString(color, left + 5, y_pos, f"Episodes: {self.episode_count}  --  CLICK TO READ STATE", 0, xp.Font_Basic)
-            y_pos -= 25
             
             # Debug messages
             for message in self.debug_messages[-8:]:
@@ -84,8 +81,6 @@ class PythonInterface(EasyPython):
         
     def mouse_click_callback(self, inWindowID, x, y, inMouse, inRefcon):
         if inMouse == xp.MouseDown:
-            self.add_debug_message("*** MOUSE CLICKED! Reading state... ***")
-            self.read_current_state()
             self.reset_to_approach()
         return 1
         
@@ -97,8 +92,6 @@ class PythonInterface(EasyPython):
 
     def read_current_state(self):
         try:
-            self.add_debug_message("Reading current aircraft state...")
-            
             q_ref = xp.findDataRef("sim/flightmodel/position/q")
             quaternion = []
             xp.getDatavf(q_ref, quaternion, 0, 4)
@@ -119,26 +112,17 @@ class PythonInterface(EasyPython):
             lon = xp.getDataf(xp.findDataRef("sim/flightmodel/position/longitude"))
             elevation = xp.getDataf(xp.findDataRef("sim/flightmodel/position/elevation"))
             
-            xplane_path = xp.getSystemPath()
-            file_path = xplane_path + "abc.txt"
-            with open(file_path, "w") as f:
-                f.write("Aircraft State Data\n")
-                f.write("==================\n\n")
-                f.write(f"Quaternion: q0={quaternion[0]:.6f}, q1={quaternion[1]:.6f}, q2={quaternion[2]:.6f}, q3={quaternion[3]:.6f}\n")
-                f.write(f"Local Position: x={local_x:.6f}, y={local_y:.6f}, z={local_z:.6f}\n")
-                f.write(f"Local Velocity: vx={local_vx:.6f}, vy={local_vy:.6f}, vz={local_vz:.6f}\n")
-                f.write(f"Angular Velocity: P={P:.6f}, Q={Q:.6f}, R={R:.6f}\n")
-                f.write(f"Lat/Lon/Elevation: {lat:.6f}, {lon:.6f}, {elevation:.6f}\n")
-                
-            self.add_debug_message("State saved to abc.txt!")
+            self.add_debug_message(f"Q: {quaternion[0]:.3f},{quaternion[1]:.3f},{quaternion[2]:.3f},{quaternion[3]:.3f}")
+            self.add_debug_message(f"Pos: x={local_x:.1f}, y={local_y:.1f}, z={local_z:.1f}")
+            self.add_debug_message(f"Vel: vx={local_vx:.1f}, vy={local_vy:.1f}, vz={local_vz:.1f}")
+            self.add_debug_message(f"AngVel: P={P:.3f}, Q={Q:.3f}, R={R:.3f}")
+            self.add_debug_message(f"Lat/Lon/Elev: {lat:.6f}, {lon:.6f}, {elevation:.1f}")
             
         except Exception as e:
             self.add_debug_message(f"READ ERROR: {e}")
 
     def reset_to_approach(self):
         try:
-            self.add_debug_message("RESET: Using hardcoded 3nm approach state...")
-            
             # Hardcoded values from captured 3nm approach state
             q_ref = xp.findDataRef("sim/flightmodel/position/q")
             xp.setDatavf(q_ref, [0.993124, -0.000318, 0.005706, -0.116929], 0, 4)
@@ -156,7 +140,5 @@ class PythonInterface(EasyPython):
             xp.setDataf(xp.findDataRef("sim/flightmodel/position/R"), -0.314619)
             
             self.episode_count += 1
-            self.add_debug_message(f"RESET: Complete - Episode #{self.episode_count}!")
-            
         except Exception as e:
             self.add_debug_message(f"RESET ERROR: {e}")
