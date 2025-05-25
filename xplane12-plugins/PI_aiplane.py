@@ -71,7 +71,7 @@ class PythonInterface(EasyPython):
             xp.drawString(color, left + 5, y_pos, "EasyPython - LTBJ Landing RL", 0, xp.Font_Basic)
             y_pos -= 20
             
-            xp.drawString(color, left + 5, y_pos, f"Episodes: {self.episode_count}  --  CLICK TO RESET", 0, xp.Font_Basic)
+            xp.drawString(color, left + 5, y_pos, f"Episodes: {self.episode_count}  --  CLICK TO READ STATE", 0, xp.Font_Basic)
             y_pos -= 25
             
             # Debug messages
@@ -84,7 +84,8 @@ class PythonInterface(EasyPython):
         
     def mouse_click_callback(self, inWindowID, x, y, inMouse, inRefcon):
         if inMouse == xp.MouseDown:
-            self.add_debug_message("*** MOUSE CLICKED! Starting reset... ***")
+            self.add_debug_message("*** MOUSE CLICKED! Reading state... ***")
+            self.read_current_state()
             self.reset_to_approach()
         return 1
         
@@ -94,46 +95,65 @@ class PythonInterface(EasyPython):
     def cursor_callback(self, inWindowID, x, y, inRefcon):
         return xp.CursorDefault
 
-    def reset_to_approach(self):
+    def read_current_state(self):
         try:
-            self.add_debug_message("RESET: Direct quaternion method...")
-            
-            heading_deg = 160.0
-            pitch_deg = -3.0
-            roll_deg = 0.0
-            
-            heading_rad = math.radians(heading_deg)
-            pitch_rad = math.radians(pitch_deg)
-            roll_rad = math.radians(roll_deg)
-            
-            psi_half = heading_rad / 2
-            theta_half = pitch_rad / 2  
-            phi_half = roll_rad / 2
-            
-            q0 = math.cos(psi_half) * math.cos(theta_half) * math.cos(phi_half) + math.sin(psi_half) * math.sin(theta_half) * math.sin(phi_half)
-            q1 = math.cos(psi_half) * math.cos(theta_half) * math.sin(phi_half) - math.sin(psi_half) * math.sin(theta_half) * math.cos(phi_half)
-            q2 = math.cos(psi_half) * math.sin(theta_half) * math.cos(phi_half) + math.sin(psi_half) * math.cos(theta_half) * math.sin(phi_half)
-            q3 = -math.cos(psi_half) * math.sin(theta_half) * math.sin(phi_half) + math.sin(psi_half) * math.cos(theta_half) * math.cos(phi_half)
+            self.add_debug_message("Reading current aircraft state...")
             
             q_ref = xp.findDataRef("sim/flightmodel/position/q")
-            xp.setDatavf(q_ref, [q0, q1, q2, q3], 0, 4)
+            quaternion = []
+            xp.getDatavf(q_ref, quaternion, 0, 4)
             
-            target_lat = 38.3347
-            target_lon = 27.1583 
-            target_alt = 1500
-            local_x, local_y, local_z = xp.worldToLocal(target_lat, target_lon, target_alt)
+            local_x = xp.getDataf(xp.findDataRef("sim/flightmodel/position/local_x"))
+            local_y = xp.getDataf(xp.findDataRef("sim/flightmodel/position/local_y"))
+            local_z = xp.getDataf(xp.findDataRef("sim/flightmodel/position/local_z"))
             
-            xp.setDataf(xp.findDataRef("sim/flightmodel/position/local_x"), local_x)
-            xp.setDataf(xp.findDataRef("sim/flightmodel/position/local_y"), local_y)
-            xp.setDataf(xp.findDataRef("sim/flightmodel/position/local_z"), local_z)
+            local_vx = xp.getDataf(xp.findDataRef("sim/flightmodel/position/local_vx"))
+            local_vy = xp.getDataf(xp.findDataRef("sim/flightmodel/position/local_vy"))
+            local_vz = xp.getDataf(xp.findDataRef("sim/flightmodel/position/local_vz"))
             
-            xp.setDataf(xp.findDataRef("sim/flightmodel/position/local_vx"), 0)
-            xp.setDataf(xp.findDataRef("sim/flightmodel/position/local_vy"), 0)
-            xp.setDataf(xp.findDataRef("sim/flightmodel/position/local_vz"), 0)
+            P = xp.getDataf(xp.findDataRef("sim/flightmodel/position/P"))
+            Q = xp.getDataf(xp.findDataRef("sim/flightmodel/position/Q"))
+            R = xp.getDataf(xp.findDataRef("sim/flightmodel/position/R"))
             
-            xp.setDataf(xp.findDataRef("sim/flightmodel/position/P"), 0.0)
-            xp.setDataf(xp.findDataRef("sim/flightmodel/position/Q"), 0.0)
-            xp.setDataf(xp.findDataRef("sim/flightmodel/position/R"), 0.0)
+            lat = xp.getDataf(xp.findDataRef("sim/flightmodel/position/latitude"))
+            lon = xp.getDataf(xp.findDataRef("sim/flightmodel/position/longitude"))
+            elevation = xp.getDataf(xp.findDataRef("sim/flightmodel/position/elevation"))
+            
+            xplane_path = xp.getSystemPath()
+            file_path = xplane_path + "abc.txt"
+            with open(file_path, "w") as f:
+                f.write("Aircraft State Data\n")
+                f.write("==================\n\n")
+                f.write(f"Quaternion: q0={quaternion[0]:.6f}, q1={quaternion[1]:.6f}, q2={quaternion[2]:.6f}, q3={quaternion[3]:.6f}\n")
+                f.write(f"Local Position: x={local_x:.6f}, y={local_y:.6f}, z={local_z:.6f}\n")
+                f.write(f"Local Velocity: vx={local_vx:.6f}, vy={local_vy:.6f}, vz={local_vz:.6f}\n")
+                f.write(f"Angular Velocity: P={P:.6f}, Q={Q:.6f}, R={R:.6f}\n")
+                f.write(f"Lat/Lon/Elevation: {lat:.6f}, {lon:.6f}, {elevation:.6f}\n")
+                
+            self.add_debug_message("State saved to abc.txt!")
+            
+        except Exception as e:
+            self.add_debug_message(f"READ ERROR: {e}")
+
+    def reset_to_approach(self):
+        try:
+            self.add_debug_message("RESET: Using hardcoded 3nm approach state...")
+            
+            # Hardcoded values from captured 3nm approach state
+            q_ref = xp.findDataRef("sim/flightmodel/position/q")
+            xp.setDatavf(q_ref, [0.993124, -0.000318, 0.005706, -0.116929], 0, 4)
+            
+            xp.setDataf(xp.findDataRef("sim/flightmodel/position/local_x"), 15389.733398)
+            xp.setDataf(xp.findDataRef("sim/flightmodel/position/local_y"), 329.115723)
+            xp.setDataf(xp.findDataRef("sim/flightmodel/position/local_z"), 29976.988281)
+            
+            xp.setDataf(xp.findDataRef("sim/flightmodel/position/local_vx"), -7.377071)
+            xp.setDataf(xp.findDataRef("sim/flightmodel/position/local_vy"), -1.748070)
+            xp.setDataf(xp.findDataRef("sim/flightmodel/position/local_vz"), -31.024368)
+            
+            xp.setDataf(xp.findDataRef("sim/flightmodel/position/P"), -0.650009)
+            xp.setDataf(xp.findDataRef("sim/flightmodel/position/Q"), 1.183697)
+            xp.setDataf(xp.findDataRef("sim/flightmodel/position/R"), -0.314619)
             
             self.episode_count += 1
             self.add_debug_message(f"RESET: Complete - Episode #{self.episode_count}!")
