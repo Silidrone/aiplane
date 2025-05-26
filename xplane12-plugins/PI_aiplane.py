@@ -1,7 +1,7 @@
 from XPPython3 import xp
 from XPPython3.utils.easy_python import EasyPython
-import math
 import time
+from math import radians, sin, cos, sqrt, atan2
 
 class PythonInterface(EasyPython):
     def __init__(self):
@@ -17,8 +17,13 @@ class PythonInterface(EasyPython):
         
         # Debug messages
         self.debug_messages = []
-        self.max_debug_messages = 8
+        self.max_debug_messages = 16
         self.last_clear_time = time.time()
+
+        # LTBJ RWY 16 reference
+        self.RUNWAY_LAT = 38.2924
+        self.RUNWAY_LON = 27.1569
+        self.RUNWAY_HEADING = 160.0  # degrees
 
     def onStart(self):
         # Cache DataRef handles
@@ -63,7 +68,7 @@ class PythonInterface(EasyPython):
 
     def create_display_window(self):
         try:
-            self.window_id = xp.createWindowEx(50, 700, 600, 100, 1,
+            self.window_id = xp.createWindowEx(50, 700, 600, 500, 1,
                                              self.draw_window_callback,
                                              self.mouse_click_callback,
                                              self.key_callback,
@@ -87,8 +92,8 @@ class PythonInterface(EasyPython):
             y_pos -= 20
             
             # Debug messages
-            for message in self.debug_messages[-8:]:
-                xp.drawString(color, left + 5, y_pos, message[:65], 0, xp.Font_Basic)
+            for message in self.debug_messages[-16:]:
+                xp.drawString(color, left + 5, y_pos, message, 0, xp.Font_Basic)
                 y_pos -= 12
                 
         except Exception as e:
@@ -107,25 +112,24 @@ class PythonInterface(EasyPython):
 
     def read_current_state(self):
         try:
-            quaternion = []
-            xp.getDatavf(self.q_ref, quaternion, 0, 4)
-            local_x = xp.getDataf(self.local_x_ref)
-            local_y = xp.getDataf(self.local_y_ref)
-            local_z = xp.getDataf(self.local_z_ref)
-            local_vx = xp.getDataf(self.local_vx_ref)
-            local_vy = xp.getDataf(self.local_vy_ref)
-            local_vz = xp.getDataf(self.local_vz_ref)
-            P = xp.getDataf(self.P_ref)
-            Q = xp.getDataf(self.Q_ref)
-            R = xp.getDataf(self.R_ref)
-            lat = xp.getDataf(self.lat_ref)
-            lon = xp.getDataf(self.lon_ref)
-            elevation = xp.getDataf(self.elevation_ref)
-            self.add_debug_message(f"Q: {quaternion[0]:.3f},{quaternion[1]:.3f},{quaternion[2]:.3f},{quaternion[3]:.3f}")
-            self.add_debug_message(f"Pos: x={local_x:.1f}, y={local_y:.1f}, z={local_z:.1f}")
-            self.add_debug_message(f"Vel: vx={local_vx:.1f}, vy={local_vy:.1f}, vz={local_vz:.1f}")
-            self.add_debug_message(f"AngVel: P={P:.3f}, Q={Q:.3f}, R={R:.3f}")
-            self.add_debug_message(f"Lat/Lon/Elev: {lat:.6f}, {lon:.6f}, {elevation:.1f}")
+            self.debug_messages = []  # Clear previous messages
+            state = self.read_state()
+            labels = [
+                "Distance to threshold (m)",
+                "Lateral deviation (m)",
+                "Height above runway (ft)",
+                "Heading deviation (deg)",
+                "Airspeed (kt)",
+                "Vertical speed (ft/min)",
+                "Pitch (deg)",
+                "Bank (deg)",
+                "Elevator pos",
+                "Throttle pos",
+                "Gear pos",
+                "Flap pos"
+            ]
+            for label, value in zip(labels, state):
+                self.add_debug_message(f"{label}: {value:.3f}")
         except Exception as e:
             self.add_debug_message(f"READ ERROR: {e}")
 
@@ -145,3 +149,78 @@ class PythonInterface(EasyPython):
             self.episode_count += 1
         except Exception as e:
             self.add_debug_message(f"RESET ERROR: {e}")
+
+    def read_state(self):
+        # Get aircraft position and attitude
+        lat = xp.getDataf(self.lat_ref)
+        lon = xp.getDataf(self.lon_ref)
+        elev = xp.getDataf(self.elevation_ref)  # meters MSL
+        pitch = xp.getDataf(xp.findDataRef("sim/flightmodel/position/theta"))  # deg
+        bank = xp.getDataf(xp.findDataRef("sim/flightmodel/position/phi"))    # deg
+        heading = xp.getDataf(xp.findDataRef("sim/flightmodel/position/hpath"))  # deg true
+
+        # Flight parameters
+        airspeed = xp.getDataf(xp.findDataRef("sim/flightmodel/position/indicated_airspeed"))  # knots
+        vertical_speed = xp.getDataf(xp.findDataRef("sim/flightmodel/position/vh_ind"))  # ft/min
+
+        # Controls
+        elevator = xp.getDataf(xp.findDataRef("sim/joystick/yoke_pitch_ratio"))
+        # Throttle (array)
+        throttle_ref = xp.findDataRef("sim/flightmodel/engine/ENGN_thro")
+        throttle_arr = [0.0] * 8
+        xp.getDatavf(throttle_ref, throttle_arr, 0, 1)
+        throttle = throttle_arr[0]
+        aileron = xp.getDataf(xp.findDataRef("sim/joystick/yoke_roll_ratio"))
+
+        # Gear/Flaps (gear is array)
+        gear_ref = xp.findDataRef("sim/aircraft/parts/acf_gear_deploy")
+        gear_arr = [0.0] * 10
+        xp.getDatavf(gear_ref, gear_arr, 0, 1)
+        gear = gear_arr[0]
+        flaps = xp.getDataf(xp.findDataRef("sim/flightmodel/controls/flaprqst"))
+
+        # Calculate runway-relative values
+        R = 6371000  # Earth radius in meters
+        dlat = radians(self.RUNWAY_LAT - lat)
+        dlon = radians(self.RUNWAY_LON - lon)
+        a = sin(dlat/2)**2 + cos(radians(lat)) * cos(radians(self.RUNWAY_LAT)) * sin(dlon/2)**2
+        c = 2 * atan2(sqrt(a), sqrt(1-a))
+        distance_to_threshold = R * c
+
+        # Heading to runway
+        y = sin(radians(self.RUNWAY_LON - lon)) * cos(radians(self.RUNWAY_LAT))
+        x = cos(radians(lat)) * sin(radians(self.RUNWAY_LAT)) - sin(radians(lat)) * cos(radians(self.RUNWAY_LAT)) * cos(radians(self.RUNWAY_LON - lon))
+        bearing = (atan2(y, x) * 180.0 / 3.141592653589793 + 360.0) % 360.0
+        heading_deviation = ((heading - self.RUNWAY_HEADING + 180) % 360) - 180  # signed deviation
+
+        # Lateral deviation (meters, perpendicular to runway centerline)
+        lateral_deviation = distance_to_threshold * sin(radians(bearing - self.RUNWAY_HEADING))
+
+        # Height above runway (feet)
+        height_above_runway = elev * 3.28084  # meters to feet
+
+        # Compose state vector
+        state = [
+            distance_to_threshold,      # meters
+            lateral_deviation,         # meters
+            height_above_runway,       # feet
+            heading_deviation,         # degrees
+            airspeed,                  # knots
+            vertical_speed,            # ft/min
+            pitch,                     # degrees
+            bank,                      # degrees
+            elevator,                  # -1 to 1
+            throttle,                  # 0 to 1
+            gear,                      # 0/1
+            flaps                      # handle position
+        ]
+        return state
+
+    def set_actions(self, elevator, throttle, aileron=None):
+        # Set elevator
+        xp.setDataf(xp.findDataRef("sim/joystick/yoke_pitch_ratio"), elevator)
+        # Set throttle
+        xp.setDataf(xp.findDataRef("sim/flightmodel/engine/ENGN_thro[0]"), throttle)
+        # Optionally set aileron
+        if aileron is not None:
+            xp.setDataf(xp.findDataRef("sim/joystick/yoke_roll_ratio"), aileron)
