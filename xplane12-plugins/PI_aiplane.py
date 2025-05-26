@@ -21,10 +21,10 @@ class PythonInterface(EasyPython):
         self.max_debug_messages = 16
         self.last_clear_time = time.time()
 
-        # LTBJ RWY 16
+        # LTBJ RWY 34R
         self.RUNWAY_LAT = 38.2823
         self.RUNWAY_LON = 27.1600
-        self.RUNWAY_HEADING = 160.0  # degrees
+        self.RUNWAY_HEADING = 340.0  # degrees
 
         # Cache all DataRefs used in state/action
         self.lat_ref = xp.findDataRef("sim/flightmodel/position/latitude")
@@ -32,7 +32,9 @@ class PythonInterface(EasyPython):
         self.elevation_ref = xp.findDataRef("sim/flightmodel/position/elevation")
         self.pitch_ref = xp.findDataRef("sim/flightmodel/position/theta")
         self.bank_ref = xp.findDataRef("sim/flightmodel/position/phi")
-        self.heading_ref = xp.findDataRef("sim/flightmodel/position/hpath")
+        #self.heading_ref = xp.findDataRef("sim/flightmodel/position/hpath")
+        self.heading_ref = xp.findDataRef("sim/flightmodel/position/magpsi")  # Use magnetic heading
+        self.magpsi_ref = xp.findDataRef("sim/flightmodel/position/magpsi")
         self.airspeed_ref = xp.findDataRef("sim/flightmodel/position/indicated_airspeed")
         self.vertical_speed_ref = xp.findDataRef("sim/flightmodel/position/vh_ind")
         self.elevator_ref = xp.findDataRef("sim/joystick/yoke_pitch_ratio")
@@ -41,6 +43,10 @@ class PythonInterface(EasyPython):
         self.gear_ref = xp.findDataRef("sim/aircraft/parts/acf_gear_deploy")
         self.flaps_ref = xp.findDataRef("sim/flightmodel/controls/flaprqst")
         self.y_agl_ref = xp.findDataRef("sim/flightmodel/position/y_agl")
+        self.alpha_ref = xp.findDataRef("sim/flightmodel/position/alpha")
+        self.beta_ref = xp.findDataRef("sim/flightmodel/position/beta")
+        self.vpath_ref = xp.findDataRef("sim/flightmodel/position/vpath")
+        self.hpath_ref = xp.findDataRef("sim/flightmodel/position/hpath")
 
     def onStart(self):
         # Cache DataRef handles
@@ -133,14 +139,13 @@ class PythonInterface(EasyPython):
                 "Distance to threshold (m)",
                 "Lateral deviation (m)",
                 "Height above ground (m)",
-                "Heading deviation (deg)",
+                "Magnetic heading (deg)",
                 "Airspeed (kt)",
                 "Vertical speed (ft/min)",
                 "Pitch (deg)",
                 "Bank (deg)",
                 "Elevator pos",
                 "Throttle pos",
-                "Gear pos",
                 "Flap pos"
             ]
             for label, raw, norm in zip(labels, state, norm_state):
@@ -174,7 +179,7 @@ class PythonInterface(EasyPython):
             y_agl = 0.0
         pitch = xp.getDataf(self.pitch_ref)  # deg
         bank = xp.getDataf(self.bank_ref)    # deg
-        heading = xp.getDataf(self.heading_ref)  # deg true
+        magpsi = xp.getDataf(self.magpsi_ref)  # deg magnetic heading
 
         # Flight parameters
         airspeed = xp.getDataf(self.airspeed_ref)  # knots
@@ -190,7 +195,6 @@ class PythonInterface(EasyPython):
         # Gear/Flaps (gear is array)
         gear_arr = [0.0] * 10
         xp.getDatavf(self.gear_ref, gear_arr, 0, 1)
-        gear = gear_arr[0]
         flaps = xp.getDataf(self.flaps_ref)
 
         # Calculate runway-relative values
@@ -201,28 +205,26 @@ class PythonInterface(EasyPython):
         c = 2 * atan2(sqrt(a), sqrt(1-a))
         distance_to_threshold = R * c
 
-        # Heading to runway
+        # Calculate bearing from aircraft to runway threshold
         y = sin(radians(self.RUNWAY_LON - lon)) * cos(radians(self.RUNWAY_LAT))
         x = cos(radians(lat)) * sin(radians(self.RUNWAY_LAT)) - sin(radians(lat)) * cos(radians(self.RUNWAY_LAT)) * cos(radians(self.RUNWAY_LON - lon))
-        bearing = (atan2(y, x) * 180.0 / 3.141592653589793 + 360.0) % 360.0
-        heading_deviation = ((heading - self.RUNWAY_HEADING + 180) % 360) - 180  # signed deviation
+        bearing_to_runway = (atan2(y, x) * 180.0 / 3.141592653589793 + 360.0) % 360.0
 
-        # Lateral deviation (meters, perpendicular to runway centerline)
-        lateral_deviation = distance_to_threshold * sin(radians(bearing - self.RUNWAY_HEADING))
+        # Lateral deviation in meters
+        lateral_deviation = distance_to_threshold * sin(radians(bearing_to_runway - self.RUNWAY_HEADING))
 
         # Compose state vector
         state = [
             distance_to_threshold,     # meters
-            lateral_deviation,         # meters
+            lateral_deviation,        # meters
             y_agl,       # meters above ground
-            heading_deviation,         # degrees
+            magpsi - self.RUNWAY_HEADING,         # degrees magnetic
             airspeed,                  # knots
             vertical_speed,            # ft/min
             pitch,                     # degrees
             bank,                      # degrees
             elevator,                  # -1 to 1
             throttle,                  # 0 to 1
-            gear,                      # 0/1
             flaps                      # handle position
         ]
         return state
@@ -230,7 +232,7 @@ class PythonInterface(EasyPython):
     def normalize_state(self, raw_state):
         return np.array([
             raw_state[0] / 6000.0,                        # distance
-            np.clip(raw_state[1] / 500.0, -1, 1),         # lateral
+            np.clip(raw_state[1] / 500.0, -1, 1),         # lateral deviation (meters, clipped)
             raw_state[2] / 2000.0,                        # height
             np.clip(raw_state[3] / 45.0, -1, 1),          # heading_dev
             np.clip((raw_state[4] - 100) / 40.0, -1, 1),  # airspeed
@@ -239,8 +241,7 @@ class PythonInterface(EasyPython):
             np.clip(raw_state[7] / 60.0, -1, 1),          # bank
             np.clip(raw_state[8], -1, 1),                 # elevator
             raw_state[9],                                 # throttle
-            raw_state[10],                                # gear
-            raw_state[11],                                # flaps
+            raw_state[10],                                # flaps
         ])
 
     def set_actions(self, elevator=None, throttle=None, aileron=None):
