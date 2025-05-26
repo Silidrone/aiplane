@@ -25,6 +25,21 @@ class PythonInterface(EasyPython):
         self.RUNWAY_LON = 27.1612
         self.RUNWAY_HEADING = 160.0  # degrees
 
+        # Cache all DataRefs used in state/action
+        self.lat_ref = xp.findDataRef("sim/flightmodel/position/latitude")
+        self.lon_ref = xp.findDataRef("sim/flightmodel/position/longitude")
+        self.elevation_ref = xp.findDataRef("sim/flightmodel/position/elevation")
+        self.pitch_ref = xp.findDataRef("sim/flightmodel/position/theta")
+        self.bank_ref = xp.findDataRef("sim/flightmodel/position/phi")
+        self.heading_ref = xp.findDataRef("sim/flightmodel/position/hpath")
+        self.airspeed_ref = xp.findDataRef("sim/flightmodel/position/indicated_airspeed")
+        self.vertical_speed_ref = xp.findDataRef("sim/flightmodel/position/vh_ind")
+        self.elevator_ref = xp.findDataRef("sim/joystick/yoke_pitch_ratio")
+        self.throttle_ref = xp.findDataRef("sim/flightmodel/engine/ENGN_thro")
+        self.aileron_ref = xp.findDataRef("sim/joystick/yoke_roll_ratio")
+        self.gear_ref = xp.findDataRef("sim/aircraft/parts/acf_gear_deploy")
+        self.flaps_ref = xp.findDataRef("sim/flightmodel/controls/flaprqst")
+
     def onStart(self):
         # Cache DataRef handles
         self.q_ref = xp.findDataRef("sim/flightmodel/position/q")
@@ -37,9 +52,6 @@ class PythonInterface(EasyPython):
         self.P_ref = xp.findDataRef("sim/flightmodel/position/P")
         self.Q_ref = xp.findDataRef("sim/flightmodel/position/Q")
         self.R_ref = xp.findDataRef("sim/flightmodel/position/R")
-        self.lat_ref = xp.findDataRef("sim/flightmodel/position/latitude")
-        self.lon_ref = xp.findDataRef("sim/flightmodel/position/longitude")
-        self.elevation_ref = xp.findDataRef("sim/flightmodel/position/elevation")
         self.create_display_window()
 
     def after_physics(self):
@@ -155,29 +167,27 @@ class PythonInterface(EasyPython):
         lat = xp.getDataf(self.lat_ref)
         lon = xp.getDataf(self.lon_ref)
         elev = xp.getDataf(self.elevation_ref)  # meters MSL
-        pitch = xp.getDataf(xp.findDataRef("sim/flightmodel/position/theta"))  # deg
-        bank = xp.getDataf(xp.findDataRef("sim/flightmodel/position/phi"))    # deg
-        heading = xp.getDataf(xp.findDataRef("sim/flightmodel/position/hpath"))  # deg true
+        pitch = xp.getDataf(self.pitch_ref)  # deg
+        bank = xp.getDataf(self.bank_ref)    # deg
+        heading = xp.getDataf(self.heading_ref)  # deg true
 
         # Flight parameters
-        airspeed = xp.getDataf(xp.findDataRef("sim/flightmodel/position/indicated_airspeed"))  # knots
-        vertical_speed = xp.getDataf(xp.findDataRef("sim/flightmodel/position/vh_ind"))  # ft/min
+        airspeed = xp.getDataf(self.airspeed_ref)  # knots
+        vertical_speed = xp.getDataf(self.vertical_speed_ref)  # ft/min
 
         # Controls
-        elevator = xp.getDataf(xp.findDataRef("sim/joystick/yoke_pitch_ratio"))
+        elevator = xp.getDataf(self.elevator_ref)
         # Throttle (array)
-        throttle_ref = xp.findDataRef("sim/flightmodel/engine/ENGN_thro")
         throttle_arr = [0.0] * 8
-        xp.getDatavf(throttle_ref, throttle_arr, 0, 1)
+        xp.getDatavf(self.throttle_ref, throttle_arr, 0, 1)
         throttle = throttle_arr[0]
-        aileron = xp.getDataf(xp.findDataRef("sim/joystick/yoke_roll_ratio"))
+        aileron = xp.getDataf(self.aileron_ref)
 
         # Gear/Flaps (gear is array)
-        gear_ref = xp.findDataRef("sim/aircraft/parts/acf_gear_deploy")
         gear_arr = [0.0] * 10
-        xp.getDatavf(gear_ref, gear_arr, 0, 1)
+        xp.getDatavf(self.gear_ref, gear_arr, 0, 1)
         gear = gear_arr[0]
-        flaps = xp.getDataf(xp.findDataRef("sim/flightmodel/controls/flaprqst"))
+        flaps = xp.getDataf(self.flaps_ref)
 
         # Calculate runway-relative values
         R = 6371000  # Earth radius in meters
@@ -216,11 +226,12 @@ class PythonInterface(EasyPython):
         ]
         return state
 
-    def set_actions(self, elevator, throttle, aileron=None):
-        # Set elevator
-        xp.setDataf(xp.findDataRef("sim/joystick/yoke_pitch_ratio"), elevator)
-        # Set throttle
-        xp.setDataf(xp.findDataRef("sim/flightmodel/engine/ENGN_thro[0]"), throttle)
-        # Optionally set aileron
+    def set_actions(self, elevator=None, throttle=None, aileron=None):
+        if elevator is not None:
+            xp.setDataf(self.elevator_ref, elevator)
+        if throttle is not None:
+            throttle_arr = [0.0] * 8
+            throttle_arr[0] = throttle
+            xp.setDatavf(self.throttle_ref, throttle_arr, 0, 1)
         if aileron is not None:
-            xp.setDataf(xp.findDataRef("sim/joystick/yoke_roll_ratio"), aileron)
+            xp.setDataf(self.aileron_ref, aileron)
