@@ -40,6 +40,7 @@ class PythonInterface(EasyPython):
         self.aileron_ref = xp.findDataRef("sim/joystick/yoke_roll_ratio")
         self.gear_ref = xp.findDataRef("sim/aircraft/parts/acf_gear_deploy")
         self.flaps_ref = xp.findDataRef("sim/flightmodel/controls/flaprqst")
+        self.y_agl_ref = xp.findDataRef("sim/flightmodel/position/y_agl")
 
     def onStart(self):
         # Cache DataRef handles
@@ -131,7 +132,7 @@ class PythonInterface(EasyPython):
             labels = [
                 "Distance to threshold (m)",
                 "Lateral deviation (m)",
-                "Height above runway (ft)",
+                "Height above ground (m)",
                 "Heading deviation (deg)",
                 "Airspeed (kt)",
                 "Vertical speed (ft/min)",
@@ -149,7 +150,7 @@ class PythonInterface(EasyPython):
 
     def reset_to_approach(self):
         try:
-            # Hardcoded values from captured 3nm approach state
+            # xp.loadDataFile(xp.DataFile_Situation, 'Output/cessna.sit')
             xp.setDatavf(self.q_ref, [0.993124, -0.000318, 0.005706, -0.116929], 0, 4)
             xp.setDataf(self.local_x_ref, 15389.733398)
             xp.setDataf(self.local_y_ref, 329.115723)
@@ -168,7 +169,9 @@ class PythonInterface(EasyPython):
         # Get aircraft position and attitude
         lat = xp.getDataf(self.lat_ref)
         lon = xp.getDataf(self.lon_ref)
-        elev = xp.getDataf(self.elevation_ref)  # meters MSL
+        y_agl = xp.getDataf(self.y_agl_ref)  # meters above ground
+        if y_agl < 0:
+            y_agl = 0.0
         pitch = xp.getDataf(self.pitch_ref)  # deg
         bank = xp.getDataf(self.bank_ref)    # deg
         heading = xp.getDataf(self.heading_ref)  # deg true
@@ -183,7 +186,6 @@ class PythonInterface(EasyPython):
         throttle_arr = [0.0] * 8
         xp.getDatavf(self.throttle_ref, throttle_arr, 0, 1)
         throttle = throttle_arr[0]
-        aileron = xp.getDataf(self.aileron_ref)
 
         # Gear/Flaps (gear is array)
         gear_arr = [0.0] * 10
@@ -208,14 +210,11 @@ class PythonInterface(EasyPython):
         # Lateral deviation (meters, perpendicular to runway centerline)
         lateral_deviation = distance_to_threshold * sin(radians(bearing - self.RUNWAY_HEADING))
 
-        # Height above runway (feet)
-        height_above_runway = elev * 3.28084  # meters to feet
-
         # Compose state vector
         state = [
             distance_to_threshold,     # meters
             lateral_deviation,         # meters
-            height_above_runway,       # feet
+            y_agl,       # meters above ground
             heading_deviation,         # degrees
             airspeed,                  # knots
             vertical_speed,            # ft/min
