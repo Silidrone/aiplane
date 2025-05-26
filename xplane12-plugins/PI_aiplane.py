@@ -20,9 +20,9 @@ class PythonInterface(EasyPython):
         self.max_debug_messages = 16
         self.last_clear_time = time.time()
 
-        # LTBJ RWY 16 reference
-        self.RUNWAY_LAT = 38.2924
-        self.RUNWAY_LON = 27.1569
+        # LTBJ RWY 16
+        self.RUNWAY_LAT = 38.2784
+        self.RUNWAY_LON = 27.1612
         self.RUNWAY_HEADING = 160.0  # degrees
 
     def onStart(self):
@@ -117,7 +117,7 @@ class PythonInterface(EasyPython):
             labels = [
                 "Distance to threshold (m)",
                 "Lateral deviation (m)",
-                "Height above runway (ft)",
+                "Height above runway (ft)",   
                 "Heading deviation (deg)",
                 "Airspeed (kt)",
                 "Vertical speed (ft/min)",
