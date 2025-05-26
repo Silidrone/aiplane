@@ -121,17 +121,6 @@ class PythonInterface(EasyPython):
             lat = xp.getDataf(self.lat_ref)
             lon = xp.getDataf(self.lon_ref)
             elevation = xp.getDataf(self.elevation_ref)
-            # Print hardcoded airport details
-            nav_ref = xp.findNavAid(None, self.airport_icao, None, None, None, xp.Nav_Airport)
-            if nav_ref:
-                nav_info = xp.getNavAidInfo(nav_ref)
-                self.add_debug_message(f"Airport ID: {getattr(nav_info, 'id', 'N/A')}")
-                self.add_debug_message(f"Name: {getattr(nav_info, 'name', 'N/A')}")
-                self.add_debug_message(f"Lat: {getattr(nav_info, 'latitude', 'N/A')}, Lon: {getattr(nav_info, 'longitude', 'N/A')}")
-                self.add_debug_message(f"Elev: {getattr(nav_info, 'elevation', 'N/A')}")
-                self.add_debug_message(f"Region: {getattr(nav_info, 'reg', 'N/A')}")
-            else:
-                self.add_debug_message(f"No airport found for ICAO {self.airport_icao}")
             self.add_debug_message(f"Q: {quaternion[0]:.3f},{quaternion[1]:.3f},{quaternion[2]:.3f},{quaternion[3]:.3f}")
             self.add_debug_message(f"Pos: x={local_x:.1f}, y={local_y:.1f}, z={local_z:.1f}")
             self.add_debug_message(f"Vel: vx={local_vx:.1f}, vy={local_vy:.1f}, vz={local_vz:.1f}")
