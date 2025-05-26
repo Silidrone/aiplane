@@ -9,6 +9,7 @@ class PythonInterface(EasyPython):
         self.name = "Airplane RL Landing Plugin"
         self.description = "Reinforcement Learning environment for landing training"
         self.id = "com.example.airplane_rl"
+        self.airport_icao = "LTBJ"
         
         self.window_id = None
         self.episode_count = 0
@@ -20,6 +21,20 @@ class PythonInterface(EasyPython):
         self.last_clear_time = time.time()
 
     def onStart(self):
+        # Cache DataRef handles
+        self.q_ref = xp.findDataRef("sim/flightmodel/position/q")
+        self.local_x_ref = xp.findDataRef("sim/flightmodel/position/local_x")
+        self.local_y_ref = xp.findDataRef("sim/flightmodel/position/local_y")
+        self.local_z_ref = xp.findDataRef("sim/flightmodel/position/local_z")
+        self.local_vx_ref = xp.findDataRef("sim/flightmodel/position/local_vx")
+        self.local_vy_ref = xp.findDataRef("sim/flightmodel/position/local_vy")
+        self.local_vz_ref = xp.findDataRef("sim/flightmodel/position/local_vz")
+        self.P_ref = xp.findDataRef("sim/flightmodel/position/P")
+        self.Q_ref = xp.findDataRef("sim/flightmodel/position/Q")
+        self.R_ref = xp.findDataRef("sim/flightmodel/position/R")
+        self.lat_ref = xp.findDataRef("sim/flightmodel/position/latitude")
+        self.lon_ref = xp.findDataRef("sim/flightmodel/position/longitude")
+        self.elevation_ref = xp.findDataRef("sim/flightmodel/position/elevation")
         self.create_display_window()
 
     def after_physics(self):
@@ -92,53 +107,52 @@ class PythonInterface(EasyPython):
 
     def read_current_state(self):
         try:
-            q_ref = xp.findDataRef("sim/flightmodel/position/q")
             quaternion = []
-            xp.getDatavf(q_ref, quaternion, 0, 4)
-            
-            local_x = xp.getDataf(xp.findDataRef("sim/flightmodel/position/local_x"))
-            local_y = xp.getDataf(xp.findDataRef("sim/flightmodel/position/local_y"))
-            local_z = xp.getDataf(xp.findDataRef("sim/flightmodel/position/local_z"))
-            
-            local_vx = xp.getDataf(xp.findDataRef("sim/flightmodel/position/local_vx"))
-            local_vy = xp.getDataf(xp.findDataRef("sim/flightmodel/position/local_vy"))
-            local_vz = xp.getDataf(xp.findDataRef("sim/flightmodel/position/local_vz"))
-            
-            P = xp.getDataf(xp.findDataRef("sim/flightmodel/position/P"))
-            Q = xp.getDataf(xp.findDataRef("sim/flightmodel/position/Q"))
-            R = xp.getDataf(xp.findDataRef("sim/flightmodel/position/R"))
-            
-            lat = xp.getDataf(xp.findDataRef("sim/flightmodel/position/latitude"))
-            lon = xp.getDataf(xp.findDataRef("sim/flightmodel/position/longitude"))
-            elevation = xp.getDataf(xp.findDataRef("sim/flightmodel/position/elevation"))
-            
+            xp.getDatavf(self.q_ref, quaternion, 0, 4)
+            local_x = xp.getDataf(self.local_x_ref)
+            local_y = xp.getDataf(self.local_y_ref)
+            local_z = xp.getDataf(self.local_z_ref)
+            local_vx = xp.getDataf(self.local_vx_ref)
+            local_vy = xp.getDataf(self.local_vy_ref)
+            local_vz = xp.getDataf(self.local_vz_ref)
+            P = xp.getDataf(self.P_ref)
+            Q = xp.getDataf(self.Q_ref)
+            R = xp.getDataf(self.R_ref)
+            lat = xp.getDataf(self.lat_ref)
+            lon = xp.getDataf(self.lon_ref)
+            elevation = xp.getDataf(self.elevation_ref)
+            # Print hardcoded airport details
+            nav_ref = xp.findNavAid(None, self.airport_icao, None, None, None, xp.Nav_Airport)
+            if nav_ref:
+                nav_info = xp.getNavAidInfo(nav_ref)
+                self.add_debug_message(f"Airport ID: {getattr(nav_info, 'id', 'N/A')}")
+                self.add_debug_message(f"Name: {getattr(nav_info, 'name', 'N/A')}")
+                self.add_debug_message(f"Lat: {getattr(nav_info, 'latitude', 'N/A')}, Lon: {getattr(nav_info, 'longitude', 'N/A')}")
+                self.add_debug_message(f"Elev: {getattr(nav_info, 'elevation', 'N/A')}")
+                self.add_debug_message(f"Region: {getattr(nav_info, 'reg', 'N/A')}")
+            else:
+                self.add_debug_message(f"No airport found for ICAO {self.airport_icao}")
             self.add_debug_message(f"Q: {quaternion[0]:.3f},{quaternion[1]:.3f},{quaternion[2]:.3f},{quaternion[3]:.3f}")
             self.add_debug_message(f"Pos: x={local_x:.1f}, y={local_y:.1f}, z={local_z:.1f}")
             self.add_debug_message(f"Vel: vx={local_vx:.1f}, vy={local_vy:.1f}, vz={local_vz:.1f}")
             self.add_debug_message(f"AngVel: P={P:.3f}, Q={Q:.3f}, R={R:.3f}")
             self.add_debug_message(f"Lat/Lon/Elev: {lat:.6f}, {lon:.6f}, {elevation:.1f}")
-            
         except Exception as e:
             self.add_debug_message(f"READ ERROR: {e}")
 
     def reset_to_approach(self):
         try:
             # Hardcoded values from captured 3nm approach state
-            q_ref = xp.findDataRef("sim/flightmodel/position/q")
-            xp.setDatavf(q_ref, [0.993124, -0.000318, 0.005706, -0.116929], 0, 4)
-            
-            xp.setDataf(xp.findDataRef("sim/flightmodel/position/local_x"), 15389.733398)
-            xp.setDataf(xp.findDataRef("sim/flightmodel/position/local_y"), 329.115723)
-            xp.setDataf(xp.findDataRef("sim/flightmodel/position/local_z"), 29976.988281)
-            
-            xp.setDataf(xp.findDataRef("sim/flightmodel/position/local_vx"), -7.377071)
-            xp.setDataf(xp.findDataRef("sim/flightmodel/position/local_vy"), -1.748070)
-            xp.setDataf(xp.findDataRef("sim/flightmodel/position/local_vz"), -31.024368)
-            
-            xp.setDataf(xp.findDataRef("sim/flightmodel/position/P"), -0.650009)
-            xp.setDataf(xp.findDataRef("sim/flightmodel/position/Q"), 1.183697)
-            xp.setDataf(xp.findDataRef("sim/flightmodel/position/R"), -0.314619)
-            
+            xp.setDatavf(self.q_ref, [0.993124, -0.000318, 0.005706, -0.116929], 0, 4)
+            xp.setDataf(self.local_x_ref, 15389.733398)
+            xp.setDataf(self.local_y_ref, 329.115723)
+            xp.setDataf(self.local_z_ref, 29976.988281)
+            xp.setDataf(self.local_vx_ref, -7.377071)
+            xp.setDataf(self.local_vy_ref, -1.748070)
+            xp.setDataf(self.local_vz_ref, -31.024368)
+            xp.setDataf(self.P_ref, -0.650009)
+            xp.setDataf(self.Q_ref, 1.183697)
+            xp.setDataf(self.R_ref, -0.314619)
             self.episode_count += 1
         except Exception as e:
             self.add_debug_message(f"RESET ERROR: {e}")
