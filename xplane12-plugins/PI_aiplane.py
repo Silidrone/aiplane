@@ -1,6 +1,7 @@
 from XPPython3 import xp
 from XPPython3.utils.easy_python import EasyPython
 import time
+import numpy as np
 from math import radians, sin, cos, sqrt, atan2
 
 class PythonInterface(EasyPython):
@@ -21,8 +22,8 @@ class PythonInterface(EasyPython):
         self.last_clear_time = time.time()
 
         # LTBJ RWY 16
-        self.RUNWAY_LAT = 38.2784
-        self.RUNWAY_LON = 27.1612
+        self.RUNWAY_LAT = 38.2823
+        self.RUNWAY_LON = 27.1600
         self.RUNWAY_HEADING = 160.0  # degrees
 
         # Cache all DataRefs used in state/action
@@ -126,10 +127,11 @@ class PythonInterface(EasyPython):
         try:
             self.debug_messages = []  # Clear previous messages
             state = self.read_state()
+            norm_state = self.normalize_state(state)
             labels = [
                 "Distance to threshold (m)",
                 "Lateral deviation (m)",
-                "Height above runway (ft)",   
+                "Height above runway (ft)",
                 "Heading deviation (deg)",
                 "Airspeed (kt)",
                 "Vertical speed (ft/min)",
@@ -140,8 +142,8 @@ class PythonInterface(EasyPython):
                 "Gear pos",
                 "Flap pos"
             ]
-            for label, value in zip(labels, state):
-                self.add_debug_message(f"{label}: {value:.3f}")
+            for label, raw, norm in zip(labels, state, norm_state):
+                self.add_debug_message(f"{label}: {raw:.3f} (norm: {norm:.3f})")
         except Exception as e:
             self.add_debug_message(f"READ ERROR: {e}")
 
@@ -211,7 +213,7 @@ class PythonInterface(EasyPython):
 
         # Compose state vector
         state = [
-            distance_to_threshold,      # meters
+            distance_to_threshold,     # meters
             lateral_deviation,         # meters
             height_above_runway,       # feet
             heading_deviation,         # degrees
@@ -225,6 +227,22 @@ class PythonInterface(EasyPython):
             flaps                      # handle position
         ]
         return state
+    
+    def normalize_state(self, raw_state):
+        return np.array([
+            raw_state[0] / 6000.0,                        # distance
+            np.clip(raw_state[1] / 500.0, -1, 1),         # lateral
+            raw_state[2] / 2000.0,                        # height
+            np.clip(raw_state[3] / 45.0, -1, 1),          # heading_dev
+            np.clip((raw_state[4] - 100) / 40.0, -1, 1),  # airspeed
+            np.clip(raw_state[5] / 1000.0, -1, 1),        # vertical_speed
+            np.clip(raw_state[6] / 10.0, -1, 1),          # pitch
+            np.clip(raw_state[7] / 60.0, -1, 1),          # bank
+            np.clip(raw_state[8], -1, 1),                 # elevator
+            raw_state[9],                                 # throttle
+            raw_state[10],                                # gear
+            raw_state[11],                                # flaps
+        ])
 
     def set_actions(self, elevator=None, throttle=None, aileron=None):
         if elevator is not None:
