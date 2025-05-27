@@ -21,10 +21,10 @@ class PythonInterface(EasyPython):
         self.max_debug_messages = 16
         self.last_clear_time = time.time()
 
-        # LTBJ RWY 34R
-        self.RUNWAY_LAT = 38.2823
-        self.RUNWAY_LON = 27.1600
-        self.RUNWAY_HEADING = 340.0  # degrees
+        # LTBJ 34R
+        self.RUNWAY_LAT = 38.278404
+        self.RUNWAY_LON = 27.161163
+        self.RUNWAY_HEADING = 346.573  # degrees
 
         # Cache all DataRefs used in state/action
         self.lat_ref = xp.findDataRef("sim/flightmodel/position/latitude")
@@ -32,15 +32,14 @@ class PythonInterface(EasyPython):
         self.elevation_ref = xp.findDataRef("sim/flightmodel/position/elevation")
         self.pitch_ref = xp.findDataRef("sim/flightmodel/position/theta")
         self.bank_ref = xp.findDataRef("sim/flightmodel/position/phi")
-        #self.heading_ref = xp.findDataRef("sim/flightmodel/position/hpath")
         self.heading_ref = xp.findDataRef("sim/flightmodel/position/magpsi")  # Use magnetic heading
         self.magpsi_ref = xp.findDataRef("sim/flightmodel/position/magpsi")
+        self.truepsi_ref = xp.findDataRef("sim/flightmodel/position/psi")
         self.airspeed_ref = xp.findDataRef("sim/flightmodel/position/indicated_airspeed")
         self.vertical_speed_ref = xp.findDataRef("sim/flightmodel/position/vh_ind")
         self.elevator_ref = xp.findDataRef("sim/joystick/yoke_pitch_ratio")
         self.throttle_ref = xp.findDataRef("sim/flightmodel/engine/ENGN_thro")
         self.aileron_ref = xp.findDataRef("sim/joystick/yoke_roll_ratio")
-        self.gear_ref = xp.findDataRef("sim/aircraft/parts/acf_gear_deploy")
         self.flaps_ref = xp.findDataRef("sim/flightmodel/controls/flaprqst")
         self.y_agl_ref = xp.findDataRef("sim/flightmodel/position/y_agl")
         self.alpha_ref = xp.findDataRef("sim/flightmodel/position/alpha")
@@ -72,7 +71,6 @@ class PythonInterface(EasyPython):
             # Clear debug messages every 10 seconds
             if current_time - self.last_clear_time >= 10.0:
                 self.clear_debug_messages()
-                    
         except Exception as e:
             self.add_debug_message(f"Error: {e}")
 
@@ -139,7 +137,7 @@ class PythonInterface(EasyPython):
                 "Distance to threshold (m)",
                 "Lateral deviation (m)",
                 "Height above ground (m)",
-                "Magnetic heading (deg)",
+                "True heading deviation (deg)",
                 "Airspeed (kt)",
                 "Vertical speed (ft/min)",
                 "Pitch (deg)",
@@ -148,6 +146,10 @@ class PythonInterface(EasyPython):
                 "Throttle pos",
                 "Flap pos"
             ]
+            # Print current lat/lon first
+            lat = xp.getDataf(self.lat_ref)
+            lon = xp.getDataf(self.lon_ref)
+            self.add_debug_message(f"Lat: {lat:.6f}, Lon: {lon:.6f}")
             for label, raw, norm in zip(labels, state, norm_state):
                 self.add_debug_message(f"{label}: {raw:.3f} (norm: {norm:.3f})")
         except Exception as e:
@@ -180,6 +182,7 @@ class PythonInterface(EasyPython):
         pitch = xp.getDataf(self.pitch_ref)  # deg
         bank = xp.getDataf(self.bank_ref)    # deg
         magpsi = xp.getDataf(self.magpsi_ref)  # deg magnetic heading
+        truepsi = xp.getDataf(self.truepsi_ref)
 
         # Flight parameters
         airspeed = xp.getDataf(self.airspeed_ref)  # knots
@@ -192,33 +195,12 @@ class PythonInterface(EasyPython):
         xp.getDatavf(self.throttle_ref, throttle_arr, 0, 1)
         throttle = throttle_arr[0]
 
-        # Gear/Flaps (gear is array)
-        gear_arr = [0.0] * 10
-        xp.getDatavf(self.gear_ref, gear_arr, 0, 1)
         flaps = xp.getDataf(self.flaps_ref)
-
-        # Calculate runway-relative values
-        R = 6371000  # Earth radius in meters
-        dlat = radians(self.RUNWAY_LAT - lat)
-        dlon = radians(self.RUNWAY_LON - lon)
-        a = sin(dlat/2)**2 + cos(radians(lat)) * cos(radians(self.RUNWAY_LAT)) * sin(dlon/2)**2
-        c = 2 * atan2(sqrt(a), sqrt(1-a))
-        distance_to_threshold = R * c
-
-        # Calculate bearing from aircraft to runway threshold
-        y = sin(radians(self.RUNWAY_LON - lon)) * cos(radians(self.RUNWAY_LAT))
-        x = cos(radians(lat)) * sin(radians(self.RUNWAY_LAT)) - sin(radians(lat)) * cos(radians(self.RUNWAY_LAT)) * cos(radians(self.RUNWAY_LON - lon))
-        bearing_to_runway = (atan2(y, x) * 180.0 / 3.141592653589793 + 360.0) % 360.0
-
-        # Lateral deviation in meters
-        lateral_deviation = distance_to_threshold * sin(radians(bearing_to_runway - self.RUNWAY_HEADING))
-
-        # Compose state vector
         state = [
-            distance_to_threshold,     # meters
-            lateral_deviation,        # meters
+            self.haversine_distance(lat, lon, self.RUNWAY_LAT, self.RUNWAY_LON),     # meters (distance to runway threshold)
+            self.lateral_deviation(lat, lon, self.RUNWAY_LAT, self.RUNWAY_LON, truepsi),        # meters (lateral deviation)
             y_agl,       # meters above ground
-            magpsi - self.RUNWAY_HEADING,         # degrees magnetic
+            self.RUNWAY_HEADING - truepsi,         # heading deviation in degrees (true)
             airspeed,                  # knots
             vertical_speed,            # ft/min
             pitch,                     # degrees
@@ -228,7 +210,7 @@ class PythonInterface(EasyPython):
             flaps                      # handle position
         ]
         return state
-    
+
     def normalize_state(self, raw_state):
         return np.array([
             raw_state[0] / 6000.0,                        # distance
@@ -253,3 +235,32 @@ class PythonInterface(EasyPython):
             xp.setDatavf(self.throttle_ref, throttle_arr, 0, 1)
         if aileron is not None:
             xp.setDataf(self.aileron_ref, aileron)
+
+    def lateral_deviation(self, from_lat, from_lon, to_lat, to_lon, true_psi):
+        from math import radians, sin, cos
+        meters_per_deg_lat = 111320
+        meters_per_deg_lon = 111320 * cos(radians(to_lat))
+        d_lat = from_lat - to_lat
+        d_lon = from_lon - to_lon
+        north = d_lat * meters_per_deg_lat
+        east = d_lon * meters_per_deg_lon
+        truepsi_rad = radians(true_psi)
+        truepsi_east = sin(truepsi_rad)
+        truepsi_north = cos(truepsi_rad)
+        latdev_truepsi = east * truepsi_north - north * truepsi_east
+        return latdev_truepsi
+    
+    def haversine_distance(self, lat1, lon1, lat2, lon2):
+        """
+        Calculate the great-circle distance between two points on the Earth (specified in decimal degrees).
+        Returns distance in meters.
+        """
+        R = 6371000  # Earth radius in meters
+        phi1 = radians(lat1)
+        phi2 = radians(lat2)
+        d_phi = radians(lat2 - lat1)
+        d_lambda = radians(lon2 - lon1)
+
+        a = sin(d_phi / 2) ** 2 + cos(phi1) * cos(phi2) * sin(d_lambda / 2) ** 2
+        c = 2 * atan2(sqrt(a), sqrt(1 - a))
+        return R * c
