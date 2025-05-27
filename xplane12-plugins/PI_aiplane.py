@@ -2,7 +2,7 @@ from XPPython3 import xp
 from XPPython3.utils.easy_python import EasyPython
 import time
 import numpy as np
-from math import radians, sin, cos, sqrt, atan2
+from math import radians, sin, cos, sqrt, atan2, tan
 
 class PythonInterface(EasyPython):
     def __init__(self):
@@ -25,6 +25,7 @@ class PythonInterface(EasyPython):
         self.RUNWAY_LAT = 38.278404
         self.RUNWAY_LON = 27.161163
         self.RUNWAY_HEADING = 346.573  # degrees
+        self.RUNWAY_ELEVATION = 114.028  # meters
 
         # Cache all DataRefs used in state/action
         self.lat_ref = xp.findDataRef("sim/flightmodel/position/latitude")
@@ -41,7 +42,6 @@ class PythonInterface(EasyPython):
         self.throttle_ref = xp.findDataRef("sim/flightmodel/engine/ENGN_thro")
         self.aileron_ref = xp.findDataRef("sim/joystick/yoke_roll_ratio")
         self.flaps_ref = xp.findDataRef("sim/flightmodel/controls/flaprqst")
-        self.y_agl_ref = xp.findDataRef("sim/flightmodel/position/y_agl")
         self.alpha_ref = xp.findDataRef("sim/flightmodel/position/alpha")
         self.beta_ref = xp.findDataRef("sim/flightmodel/position/beta")
         self.vpath_ref = xp.findDataRef("sim/flightmodel/position/vpath")
@@ -132,12 +132,13 @@ class PythonInterface(EasyPython):
         try:
             self.debug_messages = []  # Clear previous messages
             state = self.read_state()
-            norm_state = self.normalize_state(state)
+            # norm_state = self.normalize_state(state)
             labels = [
                 "Distance to threshold (m)",
+                "MSL (m)",
                 "Lateral deviation (m)",
-                "Height above ground (m)",
-                "True heading deviation (deg)",
+                "Vertical deviation (m)",
+                "Heading deviation (deg)",
                 "Airspeed (kt)",
                 "Vertical speed (ft/min)",
                 "Pitch (deg)",
@@ -150,8 +151,8 @@ class PythonInterface(EasyPython):
             lat = xp.getDataf(self.lat_ref)
             lon = xp.getDataf(self.lon_ref)
             self.add_debug_message(f"Lat: {lat:.6f}, Lon: {lon:.6f}")
-            for label, raw, norm in zip(labels, state, norm_state):
-                self.add_debug_message(f"{label}: {raw:.3f} (norm: {norm:.3f})")
+            for label, raw in zip(labels, state):
+                self.add_debug_message(f"{label}: {raw:.3f}")
         except Exception as e:
             self.add_debug_message(f"READ ERROR: {e}")
 
@@ -176,12 +177,11 @@ class PythonInterface(EasyPython):
         # Get aircraft position and attitude
         lat = xp.getDataf(self.lat_ref)
         lon = xp.getDataf(self.lon_ref)
-        y_agl = xp.getDataf(self.y_agl_ref)  # meters above ground
-        if y_agl < 0:
-            y_agl = 0.0
+        msl = xp.getDataf(self.elevation_ref)  # meters above ground
+        if msl < 0:
+            msl = 0.0
         pitch = xp.getDataf(self.pitch_ref)  # deg
         bank = xp.getDataf(self.bank_ref)    # deg
-        magpsi = xp.getDataf(self.magpsi_ref)  # deg magnetic heading
         truepsi = xp.getDataf(self.truepsi_ref)
 
         # Flight parameters
@@ -198,8 +198,9 @@ class PythonInterface(EasyPython):
         flaps = xp.getDataf(self.flaps_ref)
         state = [
             self.haversine_distance(lat, lon, self.RUNWAY_LAT, self.RUNWAY_LON),     # meters (distance to runway threshold)
-            self.lateral_deviation(lat, lon, self.RUNWAY_LAT, self.RUNWAY_LON, truepsi),        # meters (lateral deviation)
-            y_agl,       # meters above ground
+            msl,       # meters above ground
+            self.lateral_deviation(lat, lon, self.RUNWAY_LAT, self.RUNWAY_LON, truepsi),  
+            self.vertical_deviation(lat, lon, self.RUNWAY_LAT, self.RUNWAY_LON, msl, self.RUNWAY_ELEVATION),
             self.RUNWAY_HEADING - truepsi,         # heading deviation in degrees (true)
             airspeed,                  # knots
             vertical_speed,            # ft/min
@@ -211,20 +212,21 @@ class PythonInterface(EasyPython):
         ]
         return state
 
-    def normalize_state(self, raw_state):
-        return np.array([
-            raw_state[0] / 6000.0,                        # distance
-            np.clip(raw_state[1] / 500.0, -1, 1),         # lateral deviation (meters, clipped)
-            raw_state[2] / 2000.0,                        # height
-            np.clip(raw_state[3] / 45.0, -1, 1),          # heading_dev
-            np.clip((raw_state[4] - 100) / 40.0, -1, 1),  # airspeed
-            np.clip(raw_state[5] / 1000.0, -1, 1),        # vertical_speed
-            np.clip(raw_state[6] / 10.0, -1, 1),          # pitch
-            np.clip(raw_state[7] / 60.0, -1, 1),          # bank
-            np.clip(raw_state[8], -1, 1),                 # elevator
-            raw_state[9],                                 # throttle
-            raw_state[10],                                # flaps
-        ])
+    # def normalize_state(self, raw_state):
+    #     return np.array([
+    #         raw_state[0] / 6000.0,                        # distance
+    #         np.clip(raw_state[1] / 500.0, -1, 1),         # lateral deviation (meters, clipped)
+    #         raw_state[2] / 2000.0,                        # height
+    #         raw_state[3] / 2000.0,                        # height
+    #         np.clip(raw_state[4] / 45.0, -1, 1),          # heading_dev
+    #         np.clip((raw_state[5] - 100) / 40.0, -1, 1),  # airspeed
+    #         np.clip(raw_state[6] / 1000.0, -1, 1),        # vertical_speed
+    #         np.clip(raw_state[7] / 10.0, -1, 1),          # pitch
+    #         np.clip(raw_state[8] / 60.0, -1, 1),          # bank
+    #         np.clip(raw_state[9], -1, 1),                 # elevator
+    #         raw_state[10],                                 # throttle
+    #         raw_state[11],                                # flaps
+    #     ])
 
     def set_actions(self, elevator=None, throttle=None, aileron=None):
         if elevator is not None:
@@ -251,10 +253,6 @@ class PythonInterface(EasyPython):
         return latdev_truepsi
     
     def haversine_distance(self, lat1, lon1, lat2, lon2):
-        """
-        Calculate the great-circle distance between two points on the Earth (specified in decimal degrees).
-        Returns distance in meters.
-        """
         R = 6371000  # Earth radius in meters
         phi1 = radians(lat1)
         phi2 = radians(lat2)
@@ -264,3 +262,16 @@ class PythonInterface(EasyPython):
         a = sin(d_phi / 2) ** 2 + cos(phi1) * cos(phi2) * sin(d_lambda / 2) ** 2
         c = 2 * atan2(sqrt(a), sqrt(1 - a))
         return R * c
+
+    def vertical_deviation(self, from_lat, from_lon, to_lat, to_lon, aircraft_elev, runway_elev, glide_slope_deg=3.0):
+        meters_per_deg_lat = 111320
+        meters_per_deg_lon = 111320 * cos(radians(to_lat))
+        d_lat = from_lat - to_lat
+        d_lon = from_lon - to_lon
+        north = d_lat * meters_per_deg_lat
+        east = d_lon * meters_per_deg_lon
+        ground_dist = (north ** 2 + east ** 2) ** 0.5
+        glide_slope_rad = radians(glide_slope_deg)
+        ideal_alt = tan(glide_slope_rad) * ground_dist + runway_elev
+        vert_dev = aircraft_elev - ideal_alt
+        return vert_dev
