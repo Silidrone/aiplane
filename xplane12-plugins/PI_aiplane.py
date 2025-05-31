@@ -134,7 +134,7 @@ class PythonInterface(EasyPython):
             state = self.read_state()
             # norm_state = self.normalize_state(state)
             labels = [
-                "Distance to threshold (m)",
+                "Distance to runway (m)",
                 "MSL (m)",
                 "Lateral deviation (m)",
                 "Vertical deviation (m)",
@@ -142,7 +142,7 @@ class PythonInterface(EasyPython):
                 "Airspeed (kt)",
                 "Vertical speed (ft/min)",
                 "Pitch (deg)",
-                "Bank (deg)",
+                "Bank (deg)",   
                 "Elevator pos",
                 "Throttle pos",
                 "Flap pos"
@@ -169,6 +169,8 @@ class PythonInterface(EasyPython):
             xp.setDataf(self.P_ref, -0.650009)
             xp.setDataf(self.Q_ref, 1.183697)
             xp.setDataf(self.R_ref, -0.314619)
+            # Set control surfaces and throttle for approach, including flaps
+            self.set_actions(elevator=0.0, throttle=0.3, aileron=0.0, flaps=1.0)
             self.episode_count += 1
         except Exception as e:
             self.add_debug_message(f"RESET ERROR: {e}")
@@ -228,7 +230,7 @@ class PythonInterface(EasyPython):
     #         raw_state[11],                                # flaps
     #     ])
 
-    def set_actions(self, elevator=None, throttle=None, aileron=None):
+    def set_actions(self, elevator=None, throttle=None, aileron=None, flaps=None):
         if elevator is not None:
             xp.setDataf(self.elevator_ref, elevator)
         if throttle is not None:
@@ -237,6 +239,8 @@ class PythonInterface(EasyPython):
             xp.setDatavf(self.throttle_ref, throttle_arr, 0, 1)
         if aileron is not None:
             xp.setDataf(self.aileron_ref, aileron)
+        if flaps is not None:
+            xp.setDataf(self.flaps_ref, flaps)
 
     def lateral_deviation(self, from_lat, from_lon, to_lat, to_lon, true_psi):
         from math import radians, sin, cos
