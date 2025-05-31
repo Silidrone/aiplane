@@ -42,6 +42,7 @@ class PythonInterface(EasyPython):
         self.throttle_ref = xp.findDataRef("sim/flightmodel/engine/ENGN_thro")
         self.aileron_ref = xp.findDataRef("sim/joystick/yoke_roll_ratio")
         self.flaps_ref = xp.findDataRef("sim/flightmodel/controls/flaprqst")
+        self.rudder_ref = xp.findDataRef("sim/joystick/yoke_heading_ratio")
         self.alpha_ref = xp.findDataRef("sim/flightmodel/position/alpha")
         self.beta_ref = xp.findDataRef("sim/flightmodel/position/beta")
         self.vpath_ref = xp.findDataRef("sim/flightmodel/position/vpath")
@@ -132,27 +133,36 @@ class PythonInterface(EasyPython):
         try:
             self.debug_messages = []  # Clear previous messages
             state = self.read_state()
-            # norm_state = self.normalize_state(state)
             labels = [
                 "Distance to runway (m)",
                 "MSL (m)",
                 "Lateral deviation (m)",
                 "Vertical deviation (m)",
                 "Heading deviation (deg)",
-                "Airspeed (kt)",
                 "Vertical speed (ft/min)",
                 "Pitch (deg)",
                 "Bank (deg)",   
-                "Elevator pos",
-                "Throttle pos",
-                "Flap pos"
             ]
-            # Print current lat/lon first
-            lat = xp.getDataf(self.lat_ref)
-            lon = xp.getDataf(self.lon_ref)
-            self.add_debug_message(f"Lat: {lat:.6f}, Lon: {lon:.6f}")
-            for label, raw in zip(labels, state):
-                self.add_debug_message(f"{label}: {raw:.3f}")
+
+            # Normalization parameters
+            norm_params = [
+                (0, 6000),        # Distance
+                (114.028, 450),   # MSL
+                (-750, 750),      # Lateral deviation
+                (-20, 50),        # Vertical deviation
+                (-10, 10),        # Heading deviation
+                (-10, 10),        # Vertical speed
+                (-20, 20),        # Pitch
+                (-25, 25),        # Bank
+            ]
+
+            for label, raw, norm in zip(labels, state, norm_params):
+                if norm is not None:
+                    min_v, max_v = norm
+                    normalized = max(0.0, min(1.0, (raw - min_v) / (max_v - min_v)))
+                    self.add_debug_message(f"{label}: {raw:.3f} (normalized: {normalized:.3f})")
+                else:
+                    self.add_debug_message(f"{label}: {raw:.3f} (normalized: {raw:.3f})")
         except Exception as e:
             self.add_debug_message(f"READ ERROR: {e}")
 
@@ -169,8 +179,10 @@ class PythonInterface(EasyPython):
             xp.setDataf(self.P_ref, -0.650009)
             xp.setDataf(self.Q_ref, 1.183697)
             xp.setDataf(self.R_ref, -0.314619)
-            # Set control surfaces and throttle for approach, including flaps
             self.set_actions(elevator=0.0, throttle=0.3, aileron=0.0, flaps=1.0)
+            
+            # Set rudder to a fixed value to counteract the Cessna left engine bias
+            # xp.setDataf(self.rudder_ref, 0.3)
             self.episode_count += 1
         except Exception as e:
             self.add_debug_message(f"RESET ERROR: {e}")
@@ -187,48 +199,19 @@ class PythonInterface(EasyPython):
         truepsi = xp.getDataf(self.truepsi_ref)
 
         # Flight parameters
-        airspeed = xp.getDataf(self.airspeed_ref)  # knots
         vertical_speed = xp.getDataf(self.vertical_speed_ref)  # ft/min
 
-        # Controls
-        elevator = xp.getDataf(self.elevator_ref)
-        # Throttle (array)
-        throttle_arr = [0.0] * 8
-        xp.getDatavf(self.throttle_ref, throttle_arr, 0, 1)
-        throttle = throttle_arr[0]
-
-        flaps = xp.getDataf(self.flaps_ref)
         state = [
             self.haversine_distance(lat, lon, self.RUNWAY_LAT, self.RUNWAY_LON),     # meters (distance to runway threshold)
             msl,       # meters above ground
             self.lateral_deviation(lat, lon, self.RUNWAY_LAT, self.RUNWAY_LON, truepsi),  
             self.vertical_deviation(lat, lon, self.RUNWAY_LAT, self.RUNWAY_LON, msl, self.RUNWAY_ELEVATION),
             self.RUNWAY_HEADING - truepsi,         # heading deviation in degrees (true)
-            airspeed,                  # knots
             vertical_speed,            # ft/min
             pitch,                     # degrees
             bank,                      # degrees
-            elevator,                  # -1 to 1
-            throttle,                  # 0 to 1
-            flaps                      # handle position
         ]
         return state
-
-    # def normalize_state(self, raw_state):
-    #     return np.array([
-    #         raw_state[0] / 6000.0,                        # distance
-    #         np.clip(raw_state[1] / 500.0, -1, 1),         # lateral deviation (meters, clipped)
-    #         raw_state[2] / 2000.0,                        # height
-    #         raw_state[3] / 2000.0,                        # height
-    #         np.clip(raw_state[4] / 45.0, -1, 1),          # heading_dev
-    #         np.clip((raw_state[5] - 100) / 40.0, -1, 1),  # airspeed
-    #         np.clip(raw_state[6] / 1000.0, -1, 1),        # vertical_speed
-    #         np.clip(raw_state[7] / 10.0, -1, 1),          # pitch
-    #         np.clip(raw_state[8] / 60.0, -1, 1),          # bank
-    #         np.clip(raw_state[9], -1, 1),                 # elevator
-    #         raw_state[10],                                 # throttle
-    #         raw_state[11],                                # flaps
-    #     ])
 
     def set_actions(self, elevator=None, throttle=None, aileron=None, flaps=None):
         if elevator is not None:
