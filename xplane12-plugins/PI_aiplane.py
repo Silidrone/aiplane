@@ -2,7 +2,7 @@ from XPPython3 import xp
 from XPPython3.utils.easy_python import EasyPython
 import time
 import numpy as np
-from math import radians, sin, cos, sqrt, atan2, tan
+from aiplane_util import lateral_deviation, haversine_distance, vertical_deviation, draw_window_callback
 
 class PythonInterface(EasyPython):
     def __init__(self):
@@ -87,8 +87,11 @@ class PythonInterface(EasyPython):
 
     def create_display_window(self):
         try:
+            # Wrap the util draw_window_callback to provide instance variables
+            def window_draw_cb(inWindowID, inRefcon):
+                draw_window_callback(inWindowID, inRefcon, self.debug_messages, self.episode_count, xp)
             self.window_id = xp.createWindowEx(50, 700, 600, 500, 1,
-                                             self.draw_window_callback,
+                                             window_draw_cb,
                                              self.mouse_click_callback,
                                              self.key_callback,
                                              self.cursor_callback,
@@ -168,7 +171,6 @@ class PythonInterface(EasyPython):
 
     def reset_to_approach(self):
         try:
-            # xp.loadDataFile(xp.DataFile_Situation, 'Output/cessna.sit')
             xp.setDatavf(self.q_ref, [0.993124, -0.000318, 0.005706, -0.116929], 0, 4)
             xp.setDataf(self.local_x_ref, 15389.733398)
             xp.setDataf(self.local_y_ref, 329.115723)
@@ -202,10 +204,10 @@ class PythonInterface(EasyPython):
         vertical_speed = xp.getDataf(self.vertical_speed_ref)  # ft/min
 
         state = [
-            self.haversine_distance(lat, lon, self.RUNWAY_LAT, self.RUNWAY_LON),     # meters (distance to runway threshold)
+            haversine_distance(lat, lon, self.RUNWAY_LAT, self.RUNWAY_LON),     # meters (distance to runway threshold)
             msl,       # meters above ground
-            self.lateral_deviation(lat, lon, self.RUNWAY_LAT, self.RUNWAY_LON, truepsi),  
-            self.vertical_deviation(lat, lon, self.RUNWAY_LAT, self.RUNWAY_LON, msl, self.RUNWAY_ELEVATION),
+            lateral_deviation(lat, lon, self.RUNWAY_LAT, self.RUNWAY_LON, truepsi),  
+            vertical_deviation(lat, lon, self.RUNWAY_LAT, self.RUNWAY_LON, msl, self.RUNWAY_ELEVATION),
             self.RUNWAY_HEADING - truepsi,         # heading deviation in degrees (true)
             vertical_speed,            # ft/min
             pitch,                     # degrees
@@ -224,41 +226,3 @@ class PythonInterface(EasyPython):
             xp.setDataf(self.aileron_ref, aileron)
         if flaps is not None:
             xp.setDataf(self.flaps_ref, flaps)
-
-    def lateral_deviation(self, from_lat, from_lon, to_lat, to_lon, true_psi):
-        from math import radians, sin, cos
-        meters_per_deg_lat = 111320
-        meters_per_deg_lon = 111320 * cos(radians(to_lat))
-        d_lat = from_lat - to_lat
-        d_lon = from_lon - to_lon
-        north = d_lat * meters_per_deg_lat
-        east = d_lon * meters_per_deg_lon
-        truepsi_rad = radians(true_psi)
-        truepsi_east = sin(truepsi_rad)
-        truepsi_north = cos(truepsi_rad)
-        latdev_truepsi = east * truepsi_north - north * truepsi_east
-        return latdev_truepsi
-    
-    def haversine_distance(self, lat1, lon1, lat2, lon2):
-        R = 6371000  # Earth radius in meters
-        phi1 = radians(lat1)
-        phi2 = radians(lat2)
-        d_phi = radians(lat2 - lat1)
-        d_lambda = radians(lon2 - lon1)
-
-        a = sin(d_phi / 2) ** 2 + cos(phi1) * cos(phi2) * sin(d_lambda / 2) ** 2
-        c = 2 * atan2(sqrt(a), sqrt(1 - a))
-        return R * c
-
-    def vertical_deviation(self, from_lat, from_lon, to_lat, to_lon, aircraft_elev, runway_elev, glide_slope_deg=3.0):
-        meters_per_deg_lat = 111320
-        meters_per_deg_lon = 111320 * cos(radians(to_lat))
-        d_lat = from_lat - to_lat
-        d_lon = from_lon - to_lon
-        north = d_lat * meters_per_deg_lat
-        east = d_lon * meters_per_deg_lon
-        ground_dist = (north ** 2 + east ** 2) ** 0.5
-        glide_slope_rad = radians(glide_slope_deg)
-        ideal_alt = tan(glide_slope_rad) * ground_dist + runway_elev
-        vert_dev = aircraft_elev - ideal_alt
-        return vert_dev
