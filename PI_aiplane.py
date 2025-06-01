@@ -109,13 +109,11 @@ class PythonInterface(EasyPython):
         
     def mouse_click_callback(self, inWindowID, x, y, inMouse, inRefcon):
         if inMouse == xp.MouseDown:
-            # Left side of window: reset, right side: start training
-            left, top, right, bottom = xp.getWindowGeometry(inWindowID)
-            window_width = right - left
-            if x < left + window_width // 2:
-                self.reset_to_approach()
-            else:
-                self.start_training()
+            # Left click - reset to approach
+            self.reset_to_approach()
+        elif inMouse == xp.MouseDownR:
+            # Right click - start training  
+            self.start_training()
         return 1
         
     def key_callback(self, inWindowID, inKey, inFlags, inVirtualKey, inRefcon, losingFocus):
@@ -134,7 +132,7 @@ class PythonInterface(EasyPython):
         self.heading_ref = xp.findDataRef("sim/flightmodel/position/magpsi")  # Use magnetic heading
         self.magpsi_ref = xp.findDataRef("sim/flightmodel/position/magpsi")
         self.truepsi_ref = xp.findDataRef("sim/flightmodel/position/psi")
-        self.airspeed_ref = xp.findDataRef("sim/flightmodel/position/indicated_airspeed")
+        self.airspeed_ref = xp.findDataRef("sim/flightmodel/position/true_airspeed")
         self.vertical_speed_ref = xp.findDataRef("sim/flightmodel/position/vh_ind")
         self.elevator_ref = xp.findDataRef("sim/joystick/yoke_pitch_ratio")
         self.throttle_ref = xp.findDataRef("sim/flightmodel/engine/ENGN_thro")
@@ -158,14 +156,14 @@ class PythonInterface(EasyPython):
         self.Q_ref = xp.findDataRef("sim/flightmodel/position/Q")
         self.R_ref = xp.findDataRef("sim/flightmodel/position/R")
         self.create_display_window()
-        self.initialize_rl_system()
+        # self.initialize_rl_system()
 
     def after_physics(self):
         try:
             current_time = time.time()
             
             # Print current state every frame
-            # self.read_current_state()
+            self.print_current_state()
             
             # Clear debug messages every 10 seconds
             if current_time - self.last_clear_time >= 10.0:
@@ -173,40 +171,32 @@ class PythonInterface(EasyPython):
         except Exception as e:
             self.add_debug_message(f"Error: {e}")
 
-    def read_current_state(self):
+    def print_current_state(self):
         try:
+            from aiplane_models import feature_extractor
+            
             self.debug_messages = []  # Clear previous messages
             state = self.read_state()
+            
+            # Use dummy action for feature extraction
+            dummy_action = (0.0, 0.5, 0.0, 0.0)  # elevator, throttle, aileron, flaps
+            features = feature_extractor(state, dummy_action).squeeze().tolist()
+            
             labels = [
                 "Distance to runway (m)",
-                "MSL (m)",
+                "MSL (m)", 
                 "Lateral deviation (m)",
                 "Vertical deviation (m)",
                 "Heading deviation (deg)",
                 "Vertical speed (ft/min)",
                 "Pitch (deg)",
-                "Bank (deg)",   
+                "Bank (deg)",
+                "Airspeed (knots)",   
             ]
 
-            # Normalization parameters
-            norm_params = [
-                (0, 6000),        # Distance
-                (114.028, 450),   # MSL
-                (-750, 750),      # Lateral deviation
-                (-20, 50),        # Vertical deviation
-                (-10, 10),        # Heading deviation
-                (-10, 10),        # Vertical speed
-                (-20, 20),        # Pitch
-                (-25, 25),        # Bank
-            ]
-
-            for label, raw, norm in zip(labels, state, norm_params):
-                if norm is not None:
-                    min_v, max_v = norm
-                    normalized = max(0.0, min(1.0, (raw - min_v) / (max_v - min_v)))
-                    self.add_debug_message(f"{label}: {raw:.3f} (normalized: {normalized:.3f})")
-                else:
-                    self.add_debug_message(f"{label}: {raw:.3f} (normalized: {raw:.3f})")
+            for i, (label, raw) in enumerate(zip(labels, state)):
+                normalized = features[i]
+                self.add_debug_message(f"{label}: {raw:.3f} (normalized: {normalized:.3f})")
         except Exception as e:
             self.add_debug_message(f"READ ERROR: {e}")
 
@@ -243,6 +233,7 @@ class PythonInterface(EasyPython):
 
         # Flight parameters
         vertical_speed = xp.getDataf(self.vertical_speed_ref)  # ft/min
+        airspeed = xp.getDataf(self.airspeed_ref)  # knots
 
         state = [
             haversine_distance(lat, lon, self.RUNWAY_LAT, self.RUNWAY_LON),     # meters (distance to runway threshold)
@@ -253,6 +244,7 @@ class PythonInterface(EasyPython):
             vertical_speed,            # ft/min
             pitch,                     # degrees
             bank,                      # degrees
+            airspeed,                  # knots
         ]
         return state
 

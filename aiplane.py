@@ -44,11 +44,7 @@ class AiplaneEnv(MDP[AiplaneState, AiplaneAction]):
         return new_state, reward
 
     def _calculate_reward(self, old_state: AiplaneState, new_state: AiplaneState, action: AiplaneAction) -> Reward:
-        distance = new_state[0]
-        msl = new_state[1]
-        lateral_dev = abs(new_state[2])
-        vertical_dev = abs(new_state[3])
-        vertical_speed = new_state[5]
+        distance, msl, lateral_dev, vertical_dev, heading_dev, vertical_speed, pitch, bank, airspeed = new_state
         
         # Landing reward structure
         reward = 0.0
@@ -56,32 +52,39 @@ class AiplaneEnv(MDP[AiplaneState, AiplaneAction]):
         # Progress towards runway
         reward += (old_state[0] - distance) * 0.01
         
-        # Penalty for being off centerline
-        reward -= lateral_dev * 0.001
-        
-        # Penalty for being off glide path
-        reward -= vertical_dev * 0.001
-        
-        # Penalty for excessive sink rate
+        # Penalty for deviations (aligned with normalized features centered at 0)
+        reward -= abs(lateral_dev) * 0.001
+        reward -= abs(vertical_dev) * 0.001
+        reward -= abs(heading_dev) * 0.005
         reward -= abs(vertical_speed) * 0.0001
+        reward -= abs(pitch) * 0.0005
+        reward -= abs(bank) * 0.0005
         
         # Bonus for successful landing
-        if msl < 116 and distance < 100 and lateral_dev < 50:
+        if msl < 116 and distance < 100 and abs(lateral_dev) < 50:
             reward += 100
             
         # Penalty for crash
-        if msl < 114 and (lateral_dev > 100 or abs(vertical_speed) > 8):
+        if msl < 116 and (abs(lateral_dev) > 100 or abs(vertical_speed) > 8):
             reward -= 50
             
         return reward
 
     def is_terminal(self, state: AiplaneState) -> bool:
-        msl = state[1]
-        distance = state[0]
-        lateral_dev = abs(state[2])
+        distance, msl, lateral_dev, vertical_dev, heading_dev, vertical_speed, pitch, bank, airspeed = state
         
-        # Terminal if landed or crashed
-        return msl < 116 or distance > 8000 or lateral_dev > 1000
+        # Terminal conditions for faster convergence
+        return (
+            msl < 116 or  # Landed/crashed
+            distance > 8000 or  # Too far from runway
+            abs(lateral_dev) > 1000 or  # Too far off centerline
+            abs(vertical_dev) > 100 or  # Too far off glide path
+            abs(heading_dev) > 45 or  # Wrong heading
+            abs(vertical_speed) > 15 or  # Excessive sink/climb rate
+            abs(pitch) > 30 or  # Excessive pitch
+            abs(bank) > 45 or  # Excessive bank
+            airspeed < 40 or airspeed > 120  # Stall or overspeed
+        )
 
     def actions(self, state: AiplaneState) -> List[AiplaneAction]:
         return self.action_space
