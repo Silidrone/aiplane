@@ -2,7 +2,7 @@
     "emeraldwalk.runonsave": {
         "commands": [
             {
-                "match": ".*[\\\\/]xplane12-plugins[\\\\/].*\\.py$",
+                "match": "\\.py$",
                 "cmd": "powershell -Command \"Copy-Item '${file}' 'C:/Program Files (x86)/Steam/steamapps/common/X-Plane 12/Resources/plugins/PythonPlugins/'\"",
                 "silent": false
             }
