@@ -109,11 +109,9 @@ class PythonInterface(EasyPython):
         
     def mouse_click_callback(self, inWindowID, x, y, inMouse, inRefcon):
         if inMouse == xp.MouseDown:
-            # Left click - reset to approach
-            self.reset_to_approach()
-        elif inMouse == xp.MouseDownR:
-            # Right click - start training  
             self.start_training()
+            # self.reset_to_approach()
+
         return 1
         
     def key_callback(self, inWindowID, inKey, inFlags, inVirtualKey, inRefcon, losingFocus):
@@ -156,18 +154,21 @@ class PythonInterface(EasyPython):
         self.Q_ref = xp.findDataRef("sim/flightmodel/position/Q")
         self.R_ref = xp.findDataRef("sim/flightmodel/position/R")
         self.create_display_window()
-        # self.initialize_rl_system()
+        self.initialize_rl_system()
 
     def after_physics(self):
         try:
             current_time = time.time()
             
             # Print current state every frame
-            self.print_current_state()
+            # self.print_current_state()
             
             # Clear debug messages every 10 seconds
             if current_time - self.last_clear_time >= 10.0:
                 self.clear_debug_messages()
+                
+            # Run one training step per frame
+            self.step_training()
         except Exception as e:
             self.add_debug_message(f"Error: {e}")
 
@@ -202,6 +203,8 @@ class PythonInterface(EasyPython):
 
     def reset_to_approach(self):
         try:
+            self.add_debug_message(f"RESETTING: {self.episode_count}#{self.steps_in_episode}")
+            print(f"RESETTING: {self.episode_count}#{self.steps_in_episode}")
             xp.setDatavf(self.q_ref, [0.993124, -0.000318, 0.005706, -0.116929], 0, 4)
             xp.setDataf(self.local_x_ref, 15389.733398)
             xp.setDataf(self.local_y_ref, 329.115723)
@@ -279,7 +282,7 @@ class PythonInterface(EasyPython):
                 self.add_debug_message("CUDA not available, using CPU")
                 self.add_debug_message(f"Using device: {device}")
             
-            input_size = 12  # 8 state features + 4 action features
+            input_size = 13  # 9 state features + 4 action features
             self.model = AiplaneQNet(input_size, self.hidden_size)
             self.model.to(device)
             
@@ -310,13 +313,64 @@ class PythonInterface(EasyPython):
             self.add_debug_message("RL system not initialized")
             return
             
-        try:
+        if not hasattr(self, 'training_active'):
+            self.training_active = True
+            self.current_episode = 0
+            self.max_episodes = 1000
             self.add_debug_message("Starting SARSA training...")
-            self.sarsa_solver.policy_iteration()
-            self.save_model()
-            self.add_debug_message("Training completed!")
+            self.training_state = None
+            self.training_action = None
+            self.steps_in_episode = 0
+            
+    def step_training(self):
+        """Run one training step per X-Plane frame to keep simulator responsive"""
+        if not hasattr(self, 'training_active') or not self.training_active:
+            return
+            
+        try:
+            if self.current_episode >= self.max_episodes:
+                self.training_active = False
+                self.save_model()
+                self.add_debug_message("Training completed!")
+                return
+                
+            # Start new episode
+            if self.training_state is None:
+                self.current_episode += 1
+                self.training_state = self.environment.reset()
+                self.training_action = self.policy.sample(self.training_state)
+                self.steps_in_episode = 0
+                if self.current_episode % 100 == 0:
+                    self.add_debug_message(f"Episode {self.current_episode}/{self.max_episodes}")
+                    
+            # Take one step
+            new_state, reward = self.environment.step(self.training_state, self.training_action)
+            new_action = self.policy.sample(new_state)
+            
+            # Print action taken
+            elevator, throttle, aileron, flaps = self.training_action
+            self.add_debug_message(f"Action: E:{elevator:.2f} T:{throttle:.2f} A:{aileron:.2f} F:{flaps:.2f} R:{reward:.3f}")
+            
+            # SARSA update: Q(s,a) = Q(s,a) + α[r + γQ(s',a') - Q(s,a)]
+            if self.environment.is_terminal(new_state):
+                target_q = reward
+            else:
+                next_q = self.value_strategy.Q(new_state, new_action)
+                target_q = reward + self.discount_rate * next_q
+            
+            self.value_strategy.update(self.training_state, self.training_action, target_q)
+            
+            self.training_state = new_state
+            self.training_action = new_action
+            self.steps_in_episode += 1
+            
+            # Check if episode is done
+            if self.environment.is_terminal(new_state) or self.steps_in_episode > 1000:
+                self.training_state = None
+                
         except Exception as e:
             self.add_debug_message(f"Training error: {e}")
+            self.training_active = False
             self.save_model()
     
     def save_model(self):

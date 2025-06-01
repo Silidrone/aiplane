@@ -73,17 +73,17 @@ class AiplaneEnv(MDP[AiplaneState, AiplaneAction]):
     def is_terminal(self, state: AiplaneState) -> bool:
         distance, msl, lateral_dev, vertical_dev, heading_dev, vertical_speed, pitch, bank, airspeed = state
         
-        # Terminal conditions for faster convergence
+        # Terminal conditions for faster convergence (relaxed)
         return (
             msl < 116 or  # Landed/crashed
-            distance > 8000 or  # Too far from runway
-            abs(lateral_dev) > 1000 or  # Too far off centerline
-            abs(vertical_dev) > 100 or  # Too far off glide path
-            abs(heading_dev) > 45 or  # Wrong heading
-            abs(vertical_speed) > 15 or  # Excessive sink/climb rate
-            abs(pitch) > 30 or  # Excessive pitch
-            abs(bank) > 45 or  # Excessive bank
-            airspeed < 40 or airspeed > 120  # Stall or overspeed
+            distance > 12000 or  # Too far from runway
+            abs(lateral_dev) > 2000 or  # Too far off centerline
+            abs(vertical_dev) > 200 or  # Too far off glide path
+            abs(heading_dev) > 90 or  # Wrong heading
+            abs(vertical_speed) > 30 or  # Excessive sink/climb rate
+            abs(pitch) > 45 or  # Excessive pitch
+            abs(bank) > 60 or  # Excessive bank
+            airspeed < 20 or airspeed > 150  # Stall or overspeed
         )
 
     def actions(self, state: AiplaneState) -> List[AiplaneAction]:
