@@ -4,8 +4,8 @@ import torch.nn as nn
 from torch_model import TorchModel
 from typing import Tuple
 
-# State: (distance, msl, lateral_dev, vertical_dev, heading_dev, vertical_speed, pitch, bank, airspeed)
-AiplaneState = Tuple[float, float, float, float, float, float, float, float, float]
+# State: (distance, msl, lateral_dev, vertical_dev, heading_dev, vertical_speed, pitch, bank, airspeed, rec_flaps, rec_throttle, rec_pitch)
+AiplaneState = Tuple[float, float, float, float, float, float, float, float, float, float, float, float]
 # Action: (elevator, throttle, aileron, flaps)
 AiplaneAction = Tuple[float, float, float, float]
 
@@ -24,7 +24,7 @@ class AiplaneQNet(TorchModel):
 
 def feature_extractor(state: AiplaneState, action: AiplaneAction, device=torch.device("cpu")) -> torch.Tensor:
     # Normalize state features
-    distance, msl, lateral_dev, vertical_dev, heading_dev, vertical_speed, pitch, bank, airspeed = state
+    distance, msl, lateral_dev, vertical_dev, heading_dev, vertical_speed, pitch, bank, airspeed, rec_flaps, rec_throttle, rec_pitch = state
     elevator, throttle, aileron, flaps = action
     
     # Normalization ranges - distance/MSL: optimal->1, deviations: 0->0  
@@ -51,6 +51,7 @@ def feature_extractor(state: AiplaneState, action: AiplaneAction, device=torch.d
     features = [
         norm_distance, norm_msl, norm_lateral, norm_vertical,
         norm_heading, norm_vspeed, norm_pitch, norm_bank, norm_airspeed,
+        rec_flaps, rec_throttle, rec_pitch / 10.0,  # Include cheat features
         norm_elevator, norm_throttle, norm_aileron, norm_flaps
     ]
     

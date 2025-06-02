@@ -40,10 +40,10 @@ class PythonInterface(EasyPython):
         self.epsilon = 0.3
         self.min_epsilon = 0.01
         self.epsilon_decay = 0.0001
-        self.discount_rate = 0.95
+        self.discount_rate = 1
         self.hidden_size = 128
-        self.n_episodes = 1000
-        self.model_path = os.path.join(os.path.dirname(__file__), "aiplane_model.pth")
+        self.n_episodes = 100000
+        self.model_path = os.path.join(os.path.dirname(__file__), "aiplane_model.pt")
 
         # LTBJ 34R
         self.RUNWAY_LAT = 38.278404
@@ -119,8 +119,18 @@ class PythonInterface(EasyPython):
         
     def cursor_callback(self, inWindowID, x, y, inRefcon):
         return xp.CursorDefault
+    
+    def key_sniffer_callback(self, inChar, inFlags, inVirtualKey, inRefcon):
+        # Check for 'S' key press (ASCII 115 or 83) - only on key DOWN
+        if (inChar == 115 or inChar == 83) and (inFlags & xp.DownFlag):  # 's' or 'S' key down
+            self.save_model()
+            self.add_debug_message("Model saved via 'S' key!")
+        return 0  # Let other plugins handle the key too
 
     def onStart(self):
+        # Register keyboard callback for 'S' key saving
+        xp.registerKeySniffer(self.key_sniffer_callback, 1, None)
+        
         # Cache all DataRefs used in state/action
         self.lat_ref = xp.findDataRef("sim/flightmodel/position/latitude")
         self.lon_ref = xp.findDataRef("sim/flightmodel/position/longitude")
@@ -153,6 +163,11 @@ class PythonInterface(EasyPython):
         self.P_ref = xp.findDataRef("sim/flightmodel/position/P")
         self.Q_ref = xp.findDataRef("sim/flightmodel/position/Q")
         self.R_ref = xp.findDataRef("sim/flightmodel/position/R")
+        self.sim_speed_ref = xp.findDataRef("sim/time/sim_speed")
+        
+        # Set sim speed to maximum
+        xp.setDataf(self.sim_speed_ref, 8.0)
+        
         self.create_display_window()
         self.initialize_rl_system()
 
@@ -238,8 +253,35 @@ class PythonInterface(EasyPython):
         vertical_speed = xp.getDataf(self.vertical_speed_ref)  # ft/min
         airspeed = xp.getDataf(self.airspeed_ref)  # knots
 
+        # Calculate cheat guidance features
+        distance = haversine_distance(lat, lon, self.RUNWAY_LAT, self.RUNWAY_LON)
+        
+        # Flap recommendation based on distance and altitude
+        if distance > 5000 or msl > 500:
+            recommended_flaps = 0.0  # Clean config for cruise
+        elif distance > 2000:
+            recommended_flaps = 0.33  # Approach flaps
+        else:
+            recommended_flaps = 1.0  # Full flaps for landing
+            
+        # Throttle recommendation based on airspeed and altitude
+        if airspeed < 70:
+            recommended_throttle = 0.8  # Power up for speed
+        elif airspeed > 85:
+            recommended_throttle = 0.2  # Reduce power
+        else:
+            recommended_throttle = 0.5  # Maintain speed
+            
+        # Pitch guidance for approach
+        if msl > 300:
+            recommended_pitch = -2.0  # Gentle descent
+        elif msl > 150:
+            recommended_pitch = -3.0  # Steeper approach
+        else:
+            recommended_pitch = -1.0  # Flare preparation
+
         state = [
-            haversine_distance(lat, lon, self.RUNWAY_LAT, self.RUNWAY_LON),     # meters (distance to runway threshold)
+            distance,     # meters (distance to runway threshold)
             msl,       # meters above ground
             lateral_deviation(lat, lon, self.RUNWAY_LAT, self.RUNWAY_LON, truepsi),  
             vertical_deviation(lat, lon, self.RUNWAY_LAT, self.RUNWAY_LON, msl, self.RUNWAY_ELEVATION),
@@ -248,6 +290,9 @@ class PythonInterface(EasyPython):
             pitch,                     # degrees
             bank,                      # degrees
             airspeed,                  # knots
+            recommended_flaps,         # cheat: optimal flap setting
+            recommended_throttle,      # cheat: optimal throttle setting
+            recommended_pitch,         # cheat: optimal pitch attitude
         ]
         return state
 
@@ -272,19 +317,22 @@ class PythonInterface(EasyPython):
             self.add_debug_message(f"CUDA built: {torch.version.cuda}")
             self.add_debug_message(f"CUDA available: {torch.cuda.is_available()}")
             
-            if torch.cuda.is_available():
-                device = torch.device("cuda:0")
-                gpu_name = torch.cuda.get_device_name(0)
-                self.add_debug_message(f"GPU: {gpu_name}")
-                self.add_debug_message(f"Using device: {device}")
-            else:
-                device = torch.device("cpu")
-                self.add_debug_message("CUDA not available, using CPU")
-                self.add_debug_message(f"Using device: {device}")
+            # if torch.cuda.is_available():
+            #     device = torch.device("cuda:0")
+            #     gpu_name = torch.cuda.get_device_name(0)
+            #     self.add_debug_message(f"GPU: {gpu_name}")
+            #     self.add_debug_message(f"Using device: {device}")
+            # else:
+            device = torch.device("cpu")
+            self.add_debug_message("CUDA not available, using CPU")
+            self.add_debug_message(f"Using device: {device}")
             
-            input_size = 13  # 9 state features + 4 action features
+            input_size = 16  # 12 state features + 4 action features
             self.model = AiplaneQNet(input_size, self.hidden_size)
             self.model.to(device)
+            
+            self.add_debug_message(f"Model path: {self.model_path}")
+            self.add_debug_message(f"Path exists: {os.path.exists(self.model_path)}")
             
             if os.path.exists(self.model_path):
                 try:
@@ -292,6 +340,8 @@ class PythonInterface(EasyPython):
                     self.add_debug_message("Loaded existing model")
                 except Exception as e:
                     self.add_debug_message(f"Could not load model: {e}")
+            else:
+                self.add_debug_message("No existing model found, starting fresh")
             
             self.value_strategy = TorchValueStrategy(self.model, feature_extractor, self.learning_rate, device)
             self.value_strategy.initialize(self.environment)
@@ -316,7 +366,7 @@ class PythonInterface(EasyPython):
         if not hasattr(self, 'training_active'):
             self.training_active = True
             self.current_episode = 0
-            self.max_episodes = 1000
+            self.max_episodes = 100000
             self.add_debug_message("Starting SARSA training...")
             self.training_state = None
             self.training_action = None
@@ -342,6 +392,10 @@ class PythonInterface(EasyPython):
                 self.steps_in_episode = 0
                 if self.current_episode % 100 == 0:
                     self.add_debug_message(f"Episode {self.current_episode}/{self.max_episodes}")
+                # Auto-save every 10 episodes
+                if self.current_episode % 10 == 0:
+                    self.save_model()
+                    self.add_debug_message(f"Auto-saved at episode {self.current_episode}")
                     
             # Take one step
             new_state, reward = self.environment.step(self.training_state, self.training_action)
@@ -349,7 +403,7 @@ class PythonInterface(EasyPython):
             
             # Print action taken
             elevator, throttle, aileron, flaps = self.training_action
-            self.add_debug_message(f"Action: E:{elevator:.2f} T:{throttle:.2f} A:{aileron:.2f} F:{flaps:.2f} R:{reward:.3f}")
+            # self.add_debug_message(f"Action: E:{elevator:.2f} T:{throttle:.2f} A:{aileron:.2f} F:{flaps:.2f} R:{reward:.3f}")
             
             # SARSA update: Q(s,a) = Q(s,a) + α[r + γQ(s',a') - Q(s,a)]
             if self.environment.is_terminal(new_state):
@@ -365,7 +419,7 @@ class PythonInterface(EasyPython):
             self.steps_in_episode += 1
             
             # Check if episode is done
-            if self.environment.is_terminal(new_state) or self.steps_in_episode > 1000:
+            if self.environment.is_terminal(new_state):
                 self.training_state = None
                 
         except Exception as e:

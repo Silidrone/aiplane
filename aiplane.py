@@ -11,11 +11,11 @@ class AiplaneEnv(MDP[AiplaneState, AiplaneAction]):
         self.action_space = self._generate_action_space()
         
     def _generate_action_space(self) -> List[AiplaneAction]:
-        # Discrete action space for SARSA
-        elevators = [-0.5, -0.2, 0.0, 0.2, 0.5]
-        throttles = [0.0, 0.3, 0.5, 0.7, 1.0]
-        ailerons = [-0.3, -0.1, 0.0, 0.1, 0.3]
-        flaps = [0.0, 0.5, 1.0]
+        # Discrete action space for SARSA - REDUCED FOR SPEED
+        elevators = [-0.3, 0.0, 0.3]
+        throttles = [0.3, 0.5, 0.7]
+        ailerons = [-0.2, 0.0, 0.2]
+        flaps = [0.0, 1.0]
         
         actions = []
         for elev in elevators:
@@ -37,14 +37,15 @@ class AiplaneEnv(MDP[AiplaneState, AiplaneAction]):
         self.plugin.set_actions(elevator=elevator, throttle=throttle, aileron=aileron, flaps=flaps)
         
         # Wait a frame for the action to take effect
-        time.sleep(0.1)
+        # time.sleep(0.1)  # REMOVED FOR SPEED
         
         new_state = self.plugin.read_state()
         reward = self._calculate_reward(state, new_state, action)
         return new_state, reward
 
     def _calculate_reward(self, old_state: AiplaneState, new_state: AiplaneState, action: AiplaneAction) -> Reward:
-        distance, msl, lateral_dev, vertical_dev, heading_dev, vertical_speed, pitch, bank, airspeed = new_state
+        distance, msl, lateral_dev, vertical_dev, heading_dev, vertical_speed, pitch, bank, airspeed, rec_flaps, rec_throttle, rec_pitch = new_state
+        elevator, throttle, aileron, flaps = action
         
         # Landing reward structure
         reward = 0.0
@@ -60,6 +61,11 @@ class AiplaneEnv(MDP[AiplaneState, AiplaneAction]):
         reward -= abs(pitch) * 0.0005
         reward -= abs(bank) * 0.0005
         
+        # Cheat rewards: bonus for following recommendations
+        reward += 0.1 * (1.0 - abs(flaps - rec_flaps))  # Flap compliance bonus
+        reward += 0.1 * (1.0 - abs(throttle - rec_throttle))  # Throttle compliance bonus
+        reward += 0.05 * (1.0 - abs(pitch - rec_pitch) / 10.0)  # Pitch compliance bonus
+        
         # Bonus for successful landing
         if msl < 116 and distance < 100 and abs(lateral_dev) < 50:
             reward += 100
@@ -71,7 +77,7 @@ class AiplaneEnv(MDP[AiplaneState, AiplaneAction]):
         return reward
 
     def is_terminal(self, state: AiplaneState) -> bool:
-        distance, msl, lateral_dev, vertical_dev, heading_dev, vertical_speed, pitch, bank, airspeed = state
+        distance, msl, lateral_dev, vertical_dev, heading_dev, vertical_speed, pitch, bank, airspeed, _, _, _ = state
         
         # Terminal conditions for faster convergence (relaxed)
         return (
