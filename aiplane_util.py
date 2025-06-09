@@ -48,7 +48,6 @@ def draw_window_callback(inWindowID, inRefcon, debug_messages, episode_count, xp
         xp.drawString(color, left + 5, y_pos, f"Episodes: {episode_count}", 0, xp.Font_Basic)
         y_pos -= 20
 
-        # Debug messages
         for message in debug_messages[-16:]:
             xp.drawString(color, left + 5, y_pos, message, 0, xp.Font_Basic)
             y_pos -= 12

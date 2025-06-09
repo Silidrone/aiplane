@@ -4,8 +4,6 @@ from typing import Callable, Generic, List, TypeVar
 
 import numpy as np
 
-from mdp import Action, State
-
 S = TypeVar('S')
 A = TypeVar('A')
 

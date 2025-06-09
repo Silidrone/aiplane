@@ -1,9 +1,8 @@
 from abc import ABC, abstractmethod
-from typing import Generic, TypeVar
+from typing import Generic
 
 from mdp import MDP, Action, State
 from policy import Policy
-from value_strategy import ValueStrategy
 
 Threshold = float
 

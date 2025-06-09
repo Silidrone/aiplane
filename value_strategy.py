@@ -200,7 +200,6 @@ class TorchValueStrategy(ValueStrategy[State, Action]):
         
         self.q_network = network
         self.feature_extractor = feature_extractor
-        # Ensure model is on the correct device
         self.q_network.to(self.device)
         self.optimizer = optim.Adam(network.parameters(), lr=step_size)
         self._mdp = None
