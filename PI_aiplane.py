@@ -1,3 +1,7 @@
+"""
+Author: Muhamed Cicak
+"""
+
 from XPPython3 import xp
 from XPPython3.utils.easy_python import EasyPython
 import time

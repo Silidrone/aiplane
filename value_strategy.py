@@ -1,3 +1,7 @@
+"""
+Author: Muhamed Cicak
+"""
+
 from abc import ABC, abstractmethod
 from typing import Callable, Dict, Generic, Tuple
 import torch

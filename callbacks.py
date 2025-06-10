@@ -1,3 +1,7 @@
+"""
+Author: Muhamed Cicak
+"""
+
 import time
 from typing import Any, Callable, Dict, List, Optional, Union
 

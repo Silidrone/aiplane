@@ -1,3 +1,7 @@
+"""
+Author: Muhamed Cicak
+"""
+
 import time
 from typing import Callable, Optional, Tuple, TypeVar
 

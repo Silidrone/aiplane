@@ -1,3 +1,7 @@
+"""
+Author: Muhamed Cicak
+"""
+
 import random
 from abc import ABC
 from typing import Dict, Generic, Tuple
