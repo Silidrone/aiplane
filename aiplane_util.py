@@ -1,3 +1,7 @@
+"""
+Author: Muhamed Cicak
+"""
+
 from math import radians, sin, cos, sqrt, atan2, tan
 
 def lateral_deviation(from_lat, from_lon, to_lat, to_lon, true_psi):

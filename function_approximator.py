@@ -1,3 +1,7 @@
+"""
+Author: Muhamed Cicak
+"""
+
 import random
 from abc import ABC, abstractmethod
 from typing import Callable, Generic, List, TypeVar
